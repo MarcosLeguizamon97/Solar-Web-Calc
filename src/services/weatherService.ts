@@ -2,89 +2,228 @@ import { CurrentWeather, DailyForecast, HourlyForecast, LocationCoords } from '.
 import { calculateSunPosition } from '../utils/solarCalculations';
 
 export const SOLAR_PRESETS: LocationCoords[] = [
+  // 1. Centro / Santa Fe & Gran Rosario (Polo Industrial On-Grid)
   {
     name: 'Villa Gobernador Gálvez (Parque Industrial)',
-    country: 'Argentina (Santa Fe)',
-    region: 'Gran Rosario - Cordón Industrial Sur (EPE Prosumidores)',
+    country: 'Argentina',
+    region: 'Santa Fe • Gran Rosario (EPE Prosumidores)',
     lat: -33.0298,
     lng: -60.6385,
   },
   {
-    name: 'Rosario (Parque Industrial / Ovidio Lagos)',
-    country: 'Argentina (Santa Fe)',
-    region: 'Gran Rosario - Corredor PyME y logístico On-Grid',
+    name: 'Rosario (Parque Industrial Ovidio Lagos)',
+    country: 'Argentina',
+    region: 'Santa Fe • Corredor PyME y logístico',
     lat: -32.9964,
     lng: -60.6974,
   },
   {
     name: 'Alvear (Parque Industrial Metropolitano)',
-    country: 'Argentina (Santa Fe)',
-    region: 'Gran Rosario - Polo industrial autopartista y metalúrgico',
+    country: 'Argentina',
+    region: 'Santa Fe • Polo metalmecánico y autopartista',
     lat: -33.0784,
     lng: -60.6212,
   },
   {
     name: 'San Lorenzo / Puerto Gral. San Martín',
-    country: 'Argentina (Santa Fe)',
-    region: 'Gran Rosario - Complejo agroexportador y portuario',
+    country: 'Argentina',
+    region: 'Santa Fe • Complejo agroexportador y portuario',
     lat: -32.7485,
     lng: -60.7329,
   },
   {
-    name: 'Desierto de Atacama (Antofagasta)',
-    country: 'Chile',
-    region: 'Mayor radiación del planeta (>2,800 kWh/m²)',
-    lat: -23.8634,
-    lng: -69.1328,
+    name: 'Rafaela (Polo Agroindustrial del Centro)',
+    country: 'Argentina',
+    region: 'Santa Fe • Cuenca lechera e industrial',
+    lat: -31.2503,
+    lng: -61.4867,
+  },
+
+  // 2. NOA / Puna (Radiación Solar Extrema Mundial > 2.400 kWh/m²)
+  {
+    name: 'Cauchari / Susques (Puna Jujeña)',
+    country: 'Argentina',
+    region: 'Jujuy • Parque Solar Cauchari (4.020 msnm, 315 MW)',
+    lat: -24.0953,
+    lng: -66.8122,
   },
   {
-    name: 'San Juan (Valle de Ullum / Cuyo)',
+    name: 'Cafayate (Valles Calchaquíes)',
     country: 'Argentina',
-    region: 'Hub solar andino de alta heliofanía',
+    region: 'Salta • Parque Solar Cafayate (100 MW, EDESA)',
+    lat: -26.0733,
+    lng: -65.9761,
+  },
+  {
+    name: 'Tinogasta / Fiambalá (Valle de Abaucán)',
+    country: 'Argentina',
+    region: 'Catamarca • Polo solar andino (EC SAPEM)',
+    lat: -28.0632,
+    lng: -67.5649,
+  },
+  {
+    name: 'Nonogasta / Chilecito (Valle del Famatina)',
+    country: 'Argentina',
+    region: 'La Rioja • Parque Solar Nonogasta (35 MW, EDELAR)',
+    lat: -29.2974,
+    lng: -67.5028,
+  },
+
+  // 3. Cuyo (Hub Solar Andino de Alta Heliofanía > 2.000 kWh/m²)
+  {
+    name: 'Valle de Ullum / Iglesia (EPSE)',
+    country: 'Argentina',
+    region: 'San Juan • Capital solar de Cuyo (300+ MW instalados)',
     lat: -31.4285,
     lng: -68.7421,
   },
   {
-    name: 'Desierto de Sonora (Puerto Peñasco)',
-    country: 'México',
-    region: 'Gran cinturón solar norteamericano',
-    lat: 31.3172,
-    lng: -113.5375,
+    name: 'Luján de Cuyo / Anchoris',
+    country: 'Argentina',
+    region: 'Mendoza • Parque Solar Anchoris (EDEMSA / EPRE)',
+    lat: -33.3275,
+    lng: -68.9142,
   },
   {
-    name: 'Tabernas / Almería (Andalucía)',
-    country: 'España',
-    region: 'Punto de mayor radiación de Europa continental',
-    lat: 37.0503,
-    lng: -2.3912,
+    name: 'San Luis (Parque Terrazas del Portezuelo)',
+    country: 'Argentina',
+    region: 'San Luis • Generación pública sustentable (EDESAL)',
+    lat: -33.3228,
+    lng: -66.3051,
+  },
+
+  // 4. Centro / Córdoba & Litoral
+  {
+    name: 'Córdoba Capital (Parques Industriales Ferreyra)',
+    country: 'Argentina',
+    region: 'Córdoba • Ley 10.604 Generación Distribuida (EPEC)',
+    lat: -31.4201,
+    lng: -64.1888,
   },
   {
-    name: 'Desierto de Mojave (California/Nevada)',
-    country: 'Estados Unidos',
-    region: 'Epicentro fotovoltaico de escala comercial',
-    lat: 35.011,
-    lng: -115.4734,
+    name: 'Río Cuarto / Villa María',
+    country: 'Argentina',
+    region: 'Córdoba • Núcleo agroindustrial y biocombustibles',
+    lat: -33.1232,
+    lng: -64.3493,
   },
   {
-    name: 'La Guajira (Uribia)',
-    country: 'Colombia',
-    region: 'Zona de alto recurso solar y eólico del Caribe',
-    lat: 11.7139,
-    lng: -72.2647,
+    name: 'Paraná / Concordia',
+    country: 'Argentina',
+    region: 'Entre Ríos • Red sustentable ENERSA',
+    lat: -31.7333,
+    lng: -60.5333,
   },
   {
-    name: 'Noor Ouarzazate (Valle del Draa)',
-    country: 'Marruecos',
-    region: 'Mayor complejo termosolar y fotovoltaico de África',
-    lat: 30.9989,
-    lng: -6.8617,
+    name: 'Santa Rosa (Parque Industrial)',
+    country: 'Argentina',
+    region: 'La Pampa • Régimen APE y Cooperativas',
+    lat: -36.6167,
+    lng: -64.2833,
+  },
+
+  // 5. Buenos Aires & AMBA (Mayor Densidad de Consumo Eléctrico)
+  {
+    name: 'Parque Industrial Pilar / Escobar',
+    country: 'Argentina',
+    region: 'Buenos Aires Norte • Mayor parque industrial del país (EDEN)',
+    lat: -34.4589,
+    lng: -58.9142,
   },
   {
-    name: 'Arequipa (La Joya)',
-    country: 'Perú',
-    region: 'Altiplano sur con radiación superior a 2,500 kWh/m²',
-    lat: -16.5925,
-    lng: -71.8546,
+    name: 'CABA / Área Metropolitana (AMBA)',
+    country: 'Argentina',
+    region: 'Buenos Aires • Techos urbanos y comercios (Edenor / Edesur)',
+    lat: -34.6037,
+    lng: -58.3816,
+  },
+  {
+    name: 'Campana / Zárate (Corredor Petroquímico)',
+    country: 'Argentina',
+    region: 'Buenos Aires • Industria pesada y puertos (EDEN)',
+    lat: -34.1687,
+    lng: -58.9591,
+  },
+  {
+    name: 'Bahía Blanca (Polo Petroquímico y Puerto)',
+    country: 'Argentina',
+    region: 'Buenos Aires Sur • Alto potencial eólico-solar (EDES)',
+    lat: -38.7183,
+    lng: -62.2663,
+  },
+  {
+    name: 'Mar del Plata (Parque Industrial Gral. Savio)',
+    country: 'Argentina',
+    region: 'Buenos Aires Costa Atlántica • EDEA',
+    lat: -38.0055,
+    lng: -57.5565,
+  },
+  {
+    name: 'La Plata (Gran La Plata)',
+    country: 'Argentina',
+    region: 'Buenos Aires • Polo tecnológico y universitario (EDELAP)',
+    lat: -34.9214,
+    lng: -57.9545,
+  },
+
+  // 6. Patagonia (Transición Energética e Inclinaciones Óptimas Pronunciadas)
+  {
+    name: 'Añelo / Vaca Muerta',
+    country: 'Argentina',
+    region: 'Neuquén • Corredor energético e industrial (EPEN)',
+    lat: -38.3512,
+    lng: -68.7845,
+  },
+  {
+    name: 'Cipolletti / General Roca (Alto Valle)',
+    country: 'Argentina',
+    region: 'Río Negro • Fruticultura y agroindustria (EdERSA)',
+    lat: -38.9339,
+    lng: -67.9903,
+  },
+  {
+    name: 'Comodoro Rivadavia (Golfo San Jorge)',
+    country: 'Argentina',
+    region: 'Chubut • Hub industrial patagónico',
+    lat: -45.8647,
+    lng: -67.4966,
+  },
+  {
+    name: 'Río Gallegos (Península Austral)',
+    country: 'Argentina',
+    region: 'Santa Cruz • SPSE (Inclinación óptima ~48°)',
+    lat: -51.6226,
+    lng: -69.2181,
+  },
+  {
+    name: 'Ushuaia / Río Grande',
+    country: 'Argentina',
+    region: 'Tierra del Fuego • Ley 19.640 (Inclinación óptima ~54°)',
+    lat: -54.8019,
+    lng: -68.303,
+  },
+
+  // 7. NEA / Subtropical
+  {
+    name: 'Corrientes Capital / Goya',
+    country: 'Argentina',
+    region: 'Corrientes • Generación Distribuida DPEC',
+    lat: -27.4692,
+    lng: -58.8306,
+  },
+  {
+    name: 'Resistencia / Sáenz Peña',
+    country: 'Argentina',
+    region: 'Chaco • SECHEEP Generación Solar',
+    lat: -27.4514,
+    lng: -58.9866,
+  },
+  {
+    name: 'Posadas (Silicon Misiones)',
+    country: 'Argentina',
+    region: 'Misiones • Energía de Misiones Renovable',
+    lat: -27.3671,
+    lng: -55.8961,
   },
 ];
 
@@ -163,41 +302,64 @@ export async function fetchSolarWeatherData(lat: number, lng: number): Promise<{
 export async function reverseGeocode(lat: number, lng: number): Promise<{ name: string; country: string; region: string }> {
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&accept-language=es`
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=11&accept-language=es`
     );
     if (!res.ok) throw new Error('Geocoding failed');
     const data = await res.json();
     const addr = data.address || {};
 
     const city = addr.city || addr.town || addr.municipality || addr.village || addr.county || addr.suburb || 'Ubicación seleccionada';
-    const region = addr.state || addr.region || addr.province || '';
-    const country = addr.country || '';
+    const state = addr.state || addr.region || addr.province || '';
+    const country = addr.country || 'Argentina';
 
     return {
-      name: `${city}${region ? `, ${region}` : ''}`,
+      name: `${city}${state ? `, ${state}` : ''}`,
       country,
-      region,
+      region: state,
     };
   } catch {
     return {
       name: `Coordenadas ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
-      country: '',
+      country: 'Argentina',
       region: '',
     };
   }
 }
 
 /**
- * Search place by query string
+ * Search places across Argentina (with fallback to global)
  */
 export async function searchPlaces(query: string): Promise<LocationCoords[]> {
   if (!query || query.trim().length < 2) return [];
+
+  // 1. Try Argentina prioritized search
   try {
-    const res = await fetch(
+    const resAr = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ar&limit=6&accept-language=es`
+    );
+    if (resAr.ok) {
+      const itemsAr = await resAr.json();
+      if (itemsAr && itemsAr.length > 0) {
+        return itemsAr.map((it: any) => ({
+          name: it.display_name.split(',')[0],
+          region: it.display_name.split(',').slice(1, 3).join(',').trim(),
+          country: 'Argentina',
+          lat: parseFloat(it.lat),
+          lng: parseFloat(it.lon),
+        }));
+      }
+    }
+  } catch (e) {
+    console.warn('Argentina targeted search error:', e);
+  }
+
+  // 2. Global fallback if specific search returned empty
+  try {
+    const resGlobal = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=es`
     );
-    if (!res.ok) return [];
-    const items = await res.json();
+    if (!resGlobal.ok) return [];
+    const items = await resGlobal.json();
     return items.map((it: any) => ({
       name: it.display_name.split(',')[0],
       region: it.display_name.split(',').slice(1, 3).join(',').trim(),

@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Header } from './components/Header';
 import { SolarMap } from './components/SolarMap';
 import { WeatherPanel } from './components/WeatherPanel';
 import { ViabilityScorecard } from './components/ViabilityScorecard';
 import { SolarCharts } from './components/SolarCharts';
 import { GeminiSolarReport } from './components/GeminiSolarReport';
-import { SolarCalcRosario } from './components/SolarCalcRosario';
+import { SolarCalcArgentina } from './components/SolarCalcArgentina';
+import { ProfessionalSolarMetrics } from './components/ProfessionalSolarMetrics';
 import { ShareModal } from './components/ShareModal';
 import {
   CurrentWeather,
@@ -25,7 +26,7 @@ import {
   calculateOptimalTilt,
   calculateSolarProjections,
 } from './utils/solarCalculations';
-import { Share2, Sparkles, MapPin, Zap, ExternalLink } from 'lucide-react';
+import { Share2, Sparkles, MapPin, Zap, ExternalLink, Activity } from 'lucide-react';
 
 export default function App() {
   // Read initial query params if present (from shared link)
@@ -56,8 +57,8 @@ export default function App() {
 
   const initialParams = getInitialParams();
 
-  // Active View Tab: 'rosario' (SolarCalc Rosario) | 'map' (Mapa & Clima) | 'all' (Vista Completa)
-  const [activeView, setActiveView] = useState<'rosario' | 'map' | 'all'>('rosario');
+  // Active View Tab: 'kpis' (Indicadores Profesionales SolarStudio) | 'calc' (SolarCalc Argentina) | 'map' (Mapa & Clima) | 'all' (Vista Integral)
+  const [activeView, setActiveView] = useState<'kpis' | 'calc' | 'map' | 'all'>('kpis');
 
   // Location State (defaults to Gran Rosario - Villa Gobernador Gálvez)
   const [location, setLocation] = useState<LocationCoords>(
@@ -74,10 +75,14 @@ export default function App() {
     panelEfficiencyPercent: 22.0,
     tiltAngleDegrees: initialParams?.tilt ?? calculateOptimalTilt(location.lat),
     azimuthDegrees: location.lat >= 0 ? 180 : 0,
-    inverterEfficiencyPercent: 98.2,
+    inverterEfficiencyPercent: 98.5,
+    dcAcRatio: 1.25,
     groundHectares: 10,
     electricityPriceUsdMwh: 65,
     capexPerWpUsd: 0.78,
+    moduleWattageWp: 585,
+    discountRatePercent: 7.5,
+    annualDegradationPercent: 0.45,
   });
 
   // Weather and Solar Radiation Data
@@ -189,8 +194,17 @@ export default function App() {
     }
   }, [location.lat, location.lng]);
 
+  // Track last requested coordinates to avoid redundant API requests
+  const lastRequestedLocationRef = useRef<string>('');
+
   // Call Server-Side Gemini API with Google Maps Grounding
-  const handleGenerateGeminiReport = async () => {
+  const handleGenerateGeminiReport = async (force = false) => {
+    const locKey = `${location.lat.toFixed(3)}_${location.lng.toFixed(3)}_${config.systemCapacityMw}`;
+    if (!force && lastRequestedLocationRef.current === locKey && geminiState.report) {
+      return;
+    }
+    lastRequestedLocationRef.current = locKey;
+
     setGeminiState((prev) => ({ ...prev, loading: true, error: null }));
     try {
       const res = await fetch('/api/gemini/solar-analysis', {
@@ -223,7 +237,6 @@ export default function App() {
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
-      console.error('Gemini Solar Analysis Error:', err);
       setGeminiState((prev) => ({
         ...prev,
         loading: false,
@@ -232,11 +245,11 @@ export default function App() {
     }
   };
 
-  // Trigger Gemini analysis automatically on first load
+  // Trigger Gemini analysis automatically on first load or when switching locations
   useEffect(() => {
     const timer = setTimeout(() => {
       handleGenerateGeminiReport();
-    }, 1000);
+    }, 1200);
     return () => clearTimeout(timer);
   }, [location.lat, location.lng]);
 
@@ -293,17 +306,29 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* View Switcher Navigation */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-xl">
+          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-xl">
             <button
-              onClick={() => setActiveView('rosario')}
+              onClick={() => setActiveView('kpis')}
               className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
-                activeView === 'rosario'
+                activeView === 'kpis'
+                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Indicadores Profesionales (SolarStudio)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveView('calc')}
+              className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+                activeView === 'calc'
                   ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>SolarCalc Rosario (PyMEs Santa Fe)</span>
+              <span>SolarCalc Argentina (Pre-Estudios PyME)</span>
             </button>
 
             <button
@@ -337,10 +362,22 @@ export default function App() {
           </div>
         </div>
 
-        {/* Section: SolarCalc Rosario Engine */}
-        {(activeView === 'rosario' || activeView === 'all') && (
+        {/* Section: Professional Solar Industry Indicators (Inspired by SolarStudio AI) */}
+        {(activeView === 'kpis' || activeView === 'all') && (
           <section className="animate-in fade-in duration-300">
-            <SolarCalcRosario
+            <ProfessionalSolarMetrics
+              projections={projections}
+              config={config}
+              onConfigChange={setConfig}
+              location={location}
+            />
+          </section>
+        )}
+
+        {/* Section: SolarCalc Argentina Engine */}
+        {(activeView === 'calc' || activeView === 'all') && (
+          <section className="animate-in fade-in duration-300">
+            <SolarCalcArgentina
               currentLocation={location}
               onLocationChange={(loc) => {
                 setLocation(loc);
