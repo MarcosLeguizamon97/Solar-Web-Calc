@@ -1,0 +1,6 @@
+{
+  "name": "HelioSite - Análisis Solar y Viabilidad Fotovoltaica",
+  "description": "Plataforma de evaluación interactiva para plantas de energía solar con mapas satelitales, datos meteorológicos en tiempo real, proyecciones de eficiencia energética y análisis de terreno con Google Maps Grounding.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
