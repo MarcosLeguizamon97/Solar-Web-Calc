@@ -7,6 +7,7 @@ interface HeaderProps {
   currentLocation: LocationCoords;
   onSelectLocation: (loc: LocationCoords) => void;
   onOpenShareModal: () => void;
+  onHomeClick?: () => void;
   activeMode?: 'rosario' | 'map';
   onModeChange?: (mode: 'rosario' | 'map') => void;
 }
@@ -15,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   currentLocation,
   onSelectLocation,
   onOpenShareModal,
+  onHomeClick,
   activeMode = 'rosario',
   onModeChange,
 }) => {
@@ -63,8 +65,13 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
         {/* Brand and Tagline */}
         <div className="flex items-center justify-between w-full md:w-auto">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-300 p-0.5 shadow-lg shadow-amber-500/25 flex items-center justify-center">
+          <button
+            onClick={onHomeClick}
+            className="flex items-center gap-2.5 text-left transition hover:opacity-95 cursor-pointer focus:outline-none"
+            title="Ir a la pantalla de inicio"
+            aria-label="Ir a la pantalla de inicio"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-300 p-0.5 shadow-lg shadow-amber-500/25 flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                 <Sun className="w-6 h-6 text-amber-400 animate-spin-slow" />
               </div>
@@ -82,12 +89,12 @@ export const Header: React.FC<HeaderProps> = ({
                 Ingeniería solar e indicadores de la industria • Ley 27.424 & Provincias
               </p>
             </div>
-          </div>
+          </button>
 
           {/* Mobile Share Button */}
           <button
             onClick={onOpenShareModal}
-            className="md:hidden p-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20"
+            className="md:hidden min-h-[44px] px-3 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
           >
             <Share2 className="w-4 h-4" />
             <span>Compartir</span>
@@ -97,13 +104,13 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Search Bar & Presets Dropdown */}
         <div ref={dropdownRef} className="relative w-full md:max-w-md flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Buscar ciudad, parque industrial o pueblo de Argentina..."
+              placeholder="Buscar ciudad, parque industrial o pueblo..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700/80 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition"
+              className="w-full min-h-[44px] bg-slate-900 border border-slate-700/80 rounded-2xl pl-9 pr-8 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition shadow-inner"
             />
             {isSearching && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -115,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Quick Presets Toggle Button */}
           <button
             onClick={() => setShowPresetsMenu(!showPresetsMenu)}
-            className="px-3 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs text-slate-300 flex items-center gap-1.5 shrink-0 transition"
+            className="min-h-[44px] px-3.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-xs text-slate-300 flex items-center gap-1.5 shrink-0 transition cursor-pointer"
             title="Ver hubs y parques solares de Argentina"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />

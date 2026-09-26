@@ -8,6 +8,8 @@ import { GeminiSolarReport } from './components/GeminiSolarReport';
 import { SolarCalcArgentina } from './components/SolarCalcArgentina';
 import { ProfessionalSolarMetrics } from './components/ProfessionalSolarMetrics';
 import { ShareModal } from './components/ShareModal';
+import { LandingDashboard } from './components/LandingDashboard';
+import { MobileNavigation, AppViewMode } from './components/MobileNavigation';
 import {
   CurrentWeather,
   DailyForecast,
@@ -39,26 +41,28 @@ export default function App() {
     const mw = urlParams.get('mw');
     const tech = urlParams.get('tech');
     const tilt = urlParams.get('tilt');
+    const view = urlParams.get('view') as AppViewMode | null;
 
-    if (lat && lng) {
-      return {
-        location: {
-          lat: parseFloat(lat),
-          lng: parseFloat(lng),
-          name: name || 'Ubicación Compartida',
-        },
-        capacityMw: mw ? parseFloat(mw) : 5,
-        technology: (tech as SolarSystemConfig['technology']) || 'monocrystalline_tracking',
-        tilt: tilt ? parseInt(tilt) : undefined,
-      };
-    }
-    return null;
+    return {
+      location:
+        lat && lng
+          ? {
+              lat: parseFloat(lat),
+              lng: parseFloat(lng),
+              name: name || 'Ubicación Compartida',
+            }
+          : null,
+      capacityMw: mw ? parseFloat(mw) : 5,
+      technology: (tech as SolarSystemConfig['technology']) || 'monocrystalline_tracking',
+      tilt: tilt ? parseInt(tilt) : undefined,
+      view: view && ['landing', 'kpis', 'calc', 'map', 'audit'].includes(view) ? view : 'landing',
+    };
   };
 
   const initialParams = getInitialParams();
 
-  // Active View Tab: 'kpis' (Indicadores Profesionales SolarStudio) | 'calc' (SolarCalc Argentina) | 'map' (Mapa & Clima) | 'all' (Vista Integral)
-  const [activeView, setActiveView] = useState<'kpis' | 'calc' | 'map' | 'all'>('kpis');
+  // Active View Tab: 'landing' (Dashboard Inicio) | 'kpis' (Indicadores) | 'calc' (Calculadora) | 'map' (Mapa) | 'audit' (Auditoría)
+  const [activeView, setActiveView] = useState<AppViewMode>(initialParams?.view || 'landing');
 
   // Location State (defaults to Gran Rosario - Villa Gobernador Gálvez)
   const [location, setLocation] = useState<LocationCoords>(
@@ -142,9 +146,10 @@ export default function App() {
       url.searchParams.set('mw', config.systemCapacityMw.toString());
       url.searchParams.set('tech', config.technology);
       url.searchParams.set('tilt', config.tiltAngleDegrees.toString());
+      url.searchParams.set('view', activeView);
       window.history.replaceState({}, '', url.toString());
     }
-  }, [location, config]);
+  }, [location, config, activeView]);
 
   // Fetch real-time weather and calculate projections when location changes
   const loadWeatherData = useCallback(async (lat: number, lng: number) => {
@@ -277,106 +282,59 @@ export default function App() {
           }));
         }}
         onOpenShareModal={() => setIsShareModalOpen(true)}
+        onHomeClick={() => {
+          setActiveView('landing');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
 
-      {/* Public Share Notice Banner */}
-      <div className="bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15 border-b border-amber-500/25 px-4 py-2 text-xs text-amber-200">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-            </span>
-            <span>
-              <strong>Enlace Público Activo:</strong> Este análisis interactivo se actualiza automáticamente con cada cambio en el mapa.
-            </span>
-          </div>
+      {/* Main Content Layout with Mobile-First Tabbed Navigation */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-24 md:pb-12 space-y-6">
+        {/* View 1: Landing Dashboard (Clean & Minimalist Entry Point) */}
+        {activeView === 'landing' && (
+          <LandingDashboard
+            location={location}
+            projections={projections}
+            config={config}
+            onNavigate={(view) => {
+              setActiveView(view);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onOpenLocationSearch={() => {
+              const searchInput = document.querySelector('header input[type="text"]') as HTMLInputElement;
+              if (searchInput) {
+                searchInput.focus();
+              }
+            }}
+            onOpenShareModal={() => setIsShareModalOpen(true)}
+          />
+        )}
 
-          <button
-            onClick={() => setIsShareModalOpen(true)}
-            className="flex items-center gap-1.5 underline font-bold text-amber-300 hover:text-white transition"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>Copiar / Compartir Enlace Público</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* View Switcher Navigation */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
-          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-xl">
-            <button
-              onClick={() => setActiveView('kpis')}
-              className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
-                activeView === 'kpis'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <Activity className="w-3.5 h-3.5" />
-              <span>Indicadores Profesionales (SolarStudio)</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView('calc')}
-              className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
-                activeView === 'calc'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>SolarCalc Argentina (Pre-Estudios PyME)</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView('map')}
-              className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
-                activeView === 'map'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <MapPin className="w-3.5 h-3.5" />
-              <span>Mapa Satelital & Clima</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView('all')}
-              className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
-                activeView === 'all'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Vista Integral (Todo)</span>
-            </button>
-          </div>
-
-          <div className="text-xs text-slate-400 flex items-center gap-2">
-            <span>Ubicación activa:</span>
-            <strong className="text-amber-400 truncate max-w-xs">{location.name}</strong>
-          </div>
-        </div>
-
-        {/* Section: Professional Solar Industry Indicators (Inspired by SolarStudio AI) */}
-        {(activeView === 'kpis' || activeView === 'all') && (
-          <section className="animate-in fade-in duration-300">
+        {/* View 2: Professional Solar Industry KPIs (SolarStudio AI Reference) */}
+        {activeView === 'kpis' && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <MobileNavigation
+              activeView={activeView}
+              onSelectView={setActiveView}
+              onOpenShareModal={() => setIsShareModalOpen(true)}
+            />
             <ProfessionalSolarMetrics
               projections={projections}
               config={config}
               onConfigChange={setConfig}
               location={location}
             />
-          </section>
+          </div>
         )}
 
-        {/* Section: SolarCalc Argentina Engine */}
-        {(activeView === 'calc' || activeView === 'all') && (
-          <section className="animate-in fade-in duration-300">
+        {/* View 3: SolarCalc Argentina Engine (PyME & Industrial Pre-Studies) */}
+        {activeView === 'calc' && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <MobileNavigation
+              activeView={activeView}
+              onSelectView={setActiveView}
+              onOpenShareModal={() => setIsShareModalOpen(true)}
+            />
             <SolarCalcArgentina
               currentLocation={location}
               onLocationChange={(loc) => {
@@ -388,13 +346,18 @@ export default function App() {
                 }));
               }}
             />
-          </section>
+          </div>
         )}
 
-        {/* Section: Interactive Satellite Map & Real-Time Weather */}
-        {(activeView === 'map' || activeView === 'all') && (
+        {/* View 4: Geospatial Satellite Map & Parcel Delimitation */}
+        {activeView === 'map' && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            {/* Top Section: Interactive Map & Live Meteorological Panel */}
+            <MobileNavigation
+              activeView={activeView}
+              onSelectView={setActiveView}
+              onOpenShareModal={() => setIsShareModalOpen(true)}
+            />
+
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-bold text-white">
@@ -402,12 +365,12 @@ export default function App() {
                   <span>Mapa Geoespacial y Delimitación de Parcela Solar</span>
                 </div>
                 <div className="text-xs text-slate-400 hidden sm:block">
-                  Ubicación: <strong className="text-slate-200">{location.name}</strong>
+                  Ubicación activa: <strong className="text-slate-200">{location.name}</strong>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* Interactive Map */}
+                {/* Interactive Map with Enhanced Spacing & Controls */}
                 <div className="lg:col-span-8">
                   <SolarMap
                     location={location}
@@ -424,9 +387,9 @@ export default function App() {
                   />
                 </div>
 
-                {/* Quick Location & Live Status summary on side */}
+                {/* Quick Location & Site Specs summary */}
                 <div className="lg:col-span-4 space-y-4">
-                  <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                  <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
                     <div className="border-b border-slate-800 pb-3">
                       <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
                         Emplazamiento Seleccionado
@@ -442,26 +405,26 @@ export default function App() {
                     </div>
 
                     <div className="space-y-2.5 text-xs">
-                      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                      <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800">
                         <span className="text-slate-400">Capacidad Proyectada:</span>
                         <span className="font-bold text-amber-400 text-sm">{config.systemCapacityMw} MWp</span>
                       </div>
 
-                      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                      <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800">
                         <span className="text-slate-400">Generación Estimada:</span>
                         <span className="font-bold text-emerald-400 text-sm">
                           {projections.annualGenerationMwh.toLocaleString()} MWh/año
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                      <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800">
                         <span className="text-slate-400">Inclinación Óptima (Tilt):</span>
                         <span className="font-bold text-cyan-400 text-sm">
                           {config.tiltAngleDegrees}° {location.lat >= 0 ? '(Sur)' : '(Norte)'}
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                      <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800">
                         <span className="text-slate-400">Superficie Terreno:</span>
                         <span className="font-bold text-slate-200 text-sm">
                           {measuredHectares.toFixed(1)} ha
@@ -471,27 +434,17 @@ export default function App() {
 
                     <button
                       onClick={() => setIsShareModalOpen(true)}
-                      className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition"
+                      className="w-full min-h-[44px] py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition cursor-pointer"
                     >
                       <Share2 className="w-4 h-4" />
-                      <span>Compartir con Inversionistas / Clientes</span>
+                      <span>Compartir Proyecto</span>
                     </button>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Section 2: Real-time Weather & Solar Panel */}
-            <section>
-              <WeatherPanel
-                weather={weatherData.current}
-                hourly={weatherData.hourly}
-                daily={weatherData.daily}
-                loading={loadingWeather}
-              />
-            </section>
-
-            {/* Section 3: Viability Scorecard & Parameter Configurator */}
+            {/* Scorecard & Technical Parameters */}
             <section>
               <ViabilityScorecard
                 projections={projections}
@@ -501,23 +454,44 @@ export default function App() {
                 measuredHectares={measuredHectares}
               />
             </section>
+          </div>
+        )}
 
-            {/* Section 4: Solar Charts (12 Months, 24h Hourly Curve, Losses, Financials) */}
-            <section>
-              <SolarCharts
-                hourly={weatherData.hourly}
-                projections={projections}
-                systemCapacityMw={config.systemCapacityMw}
-              />
-            </section>
+        {/* View 5: Technical Audit (Google Maps Grounding) & Real-time Weather */}
+        {activeView === 'audit' && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <MobileNavigation
+              activeView={activeView}
+              onSelectView={setActiveView}
+              onOpenShareModal={() => setIsShareModalOpen(true)}
+            />
 
-            {/* Section 5: Gemini Senior Engineer Feasibility Audit with Google Maps Grounding */}
+            {/* 1. Senior Engineer Feasibility Audit with Google Maps Grounding */}
             <section>
               <GeminiSolarReport
                 analysisState={geminiState}
                 onGenerateReport={handleGenerateGeminiReport}
                 location={location}
                 config={config}
+              />
+            </section>
+
+            {/* 2. Real-time Weather & Radiation */}
+            <section>
+              <WeatherPanel
+                weather={weatherData.current}
+                hourly={weatherData.hourly}
+                daily={weatherData.daily}
+                loading={loadingWeather}
+              />
+            </section>
+
+            {/* 3. Solar Charts (12 Months, 24h Hourly Curve) */}
+            <section>
+              <SolarCharts
+                hourly={weatherData.hourly}
+                projections={projections}
+                systemCapacityMw={config.systemCapacityMw}
               />
             </section>
           </div>
@@ -533,8 +507,17 @@ export default function App() {
         projections={projections}
       />
 
+      {/* Mobile Bottom Navigation Bar (Always available on smartphone screens) */}
+      <MobileNavigation
+        activeView={activeView}
+        onSelectView={(v) => {
+          setActiveView(v);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950/90 py-6 px-4 sm:px-6 text-xs text-slate-500 mt-12">
+      <footer className="border-t border-slate-800/80 bg-slate-950/90 py-6 px-4 sm:px-6 text-xs text-slate-500 hidden md:block">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-slate-300">HelioSite Pro</span>
@@ -545,7 +528,7 @@ export default function App() {
           <div className="flex items-center gap-4 text-slate-400">
             <span>Datos climáticos: Open-Meteo Solar & Satellite</span>
             <span>•</span>
-            <span>IA: Gemini 3.8 Flash con Google Maps Grounding</span>
+            <span>IA: Gemini 2.5 Flash con Google Maps Grounding</span>
           </div>
         </div>
       </footer>

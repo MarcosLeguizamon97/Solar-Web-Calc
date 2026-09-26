@@ -22,6 +22,7 @@ import {
   Info,
 } from 'lucide-react';
 import { EnergyProjections, SolarSystemConfig, LocationCoords } from '../types';
+import { MetricExplanationModal } from './MetricExplanationModal';
 
 interface ProfessionalSolarMetricsProps {
   projections: EnergyProjections;
@@ -41,6 +42,7 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
   const [activeTab, setActiveTab] = useState<TabMode>('kpis');
   const [showConfigDrawer, setShowConfigDrawer] = useState(false);
   const [selectedBenchmark, setSelectedBenchmark] = useState<string>('san_juan');
+  const [activeMetricModal, setActiveMetricModal] = useState<{ id: string; value?: string | number } | null>(null);
 
   // Benchmark sites database across Argentine regions
   const benchmarkSites: Record<string, { name: string; country: string; ghi: number; specificYield: number; pr: number; lcoe: number }> = {
@@ -197,89 +199,137 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* 1. Specific Yield */}
-            <div className="bg-gradient-to-br from-amber-500/15 via-slate-950/80 to-slate-950 border border-amber-500/30 rounded-xl p-4 relative overflow-hidden group hover:border-amber-500/60 transition">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
-                <span className="flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-amber-400" />
-                  Specific Yield (Rendimiento)
-                </span>
-                <span className="text-[10px] bg-amber-500/10 text-amber-300 px-1.5 py-0.5 rounded font-mono">
-                  kWh/kWp/año
-                </span>
+            <div className="bg-gradient-to-br from-amber-500/15 via-slate-950/80 to-slate-950 border border-amber-500/30 rounded-2xl p-4 relative overflow-hidden group hover:border-amber-500/60 transition flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+                  <span className="flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-400" />
+                    Specific Yield (Rendimiento)
+                  </span>
+                  <button
+                    onClick={() =>
+                      setActiveMetricModal({
+                        id: 'specific_yield',
+                        value: `${projections.specificYieldKwhKwp} kWh/kWp`,
+                      })
+                    }
+                    className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
+                    title="Ver cálculo de Specific Yield"
+                    aria-label="Ver cálculo de Specific Yield"
+                  >
+                    <Info className="w-4 h-4 text-amber-400" />
+                  </button>
+                </div>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  <span className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tight">
+                    {projections.specificYieldKwhKwp.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-amber-300/80 font-bold">kWh/kWp</span>
+                </div>
               </div>
-              <div className="mt-2.5 flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tight">
-                  {projections.specificYieldKwhKwp.toLocaleString()}
-                </span>
-                <span className="text-xs text-amber-300/80 font-bold">kWh/kWp</span>
-              </div>
-              <div className="mt-1.5 text-[11px] text-slate-400 leading-tight">
+              <div className="mt-2 text-[11px] text-slate-400 leading-tight">
                 Indicador rey de productividad del emplazamiento independiente de la potencia.
               </div>
             </div>
 
             {/* 2. Performance Ratio (PR) */}
-            <div className="bg-gradient-to-br from-emerald-500/15 via-slate-950/80 to-slate-950 border border-emerald-500/30 rounded-xl p-4 relative overflow-hidden group hover:border-emerald-500/60 transition">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
-                <span className="flex items-center gap-1.5">
-                  <Award className="w-3.5 h-3.5 text-emerald-400" />
-                  Performance Ratio (PR)
-                </span>
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-300 px-1.5 py-0.5 rounded font-mono">
-                  IEC 61724
-                </span>
+            <div className="bg-gradient-to-br from-emerald-500/15 via-slate-950/80 to-slate-950 border border-emerald-500/30 rounded-2xl p-4 relative overflow-hidden group hover:border-emerald-500/60 transition flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+                  <span className="flex items-center gap-1.5">
+                    <Award className="w-3.5 h-3.5 text-emerald-400" />
+                    Performance Ratio (PR)
+                  </span>
+                  <button
+                    onClick={() =>
+                      setActiveMetricModal({
+                        id: 'pr',
+                        value: `${projections.performanceRatio}%`,
+                      })
+                    }
+                    className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
+                    title="Ver cálculo de Performance Ratio"
+                    aria-label="Ver cálculo de Performance Ratio"
+                  >
+                    <Info className="w-4 h-4 text-emerald-400" />
+                  </button>
+                </div>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
+                    {projections.performanceRatio}%
+                  </span>
+                  <span className="text-xs text-emerald-300/80 font-bold">de eficiencia real</span>
+                </div>
               </div>
-              <div className="mt-2.5 flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
-                  {projections.performanceRatio}%
-                </span>
-                <span className="text-xs text-emerald-300/80 font-bold">de eficiencia real</span>
-              </div>
-              <div className="mt-1.5 text-[11px] text-slate-400 leading-tight">
+              <div className="mt-2 text-[11px] text-slate-400 leading-tight">
                 Energía neta inyectada vs. energía teórica en el plano de módulos (POA).
               </div>
             </div>
 
             {/* 3. Capacity Factor (CF) */}
-            <div className="bg-gradient-to-br from-cyan-500/15 via-slate-950/80 to-slate-950 border border-cyan-500/30 rounded-xl p-4 relative overflow-hidden group hover:border-cyan-500/60 transition">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
-                <span className="flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-cyan-400" />
-                  Factor de Capacidad (CF)
-                </span>
-                <span className="text-[10px] bg-cyan-500/10 text-cyan-300 px-1.5 py-0.5 rounded font-mono">
-                  CF %
-                </span>
+            <div className="bg-gradient-to-br from-cyan-500/15 via-slate-950/80 to-slate-950 border border-cyan-500/30 rounded-2xl p-4 relative overflow-hidden group hover:border-cyan-500/60 transition flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+                  <span className="flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-cyan-400" />
+                    Factor de Capacidad (CF)
+                  </span>
+                  <button
+                    onClick={() =>
+                      setActiveMetricModal({
+                        id: 'capacity_factor',
+                        value: `${projections.capacityFactorPercent}%`,
+                      })
+                    }
+                    className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
+                    title="Ver cálculo de Factor de Capacidad"
+                    aria-label="Ver cálculo de Factor de Capacidad"
+                  >
+                    <Info className="w-4 h-4 text-cyan-400" />
+                  </button>
+                </div>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  <span className="text-2xl sm:text-3xl font-black text-cyan-400 tracking-tight">
+                    {projections.capacityFactorPercent}%
+                  </span>
+                  <span className="text-xs text-cyan-300/80 font-bold">anual</span>
+                </div>
               </div>
-              <div className="mt-2.5 flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-black text-cyan-400 tracking-tight">
-                  {projections.capacityFactorPercent}%
-                </span>
-                <span className="text-xs text-cyan-300/80 font-bold">anual</span>
-              </div>
-              <div className="mt-1.5 text-[11px] text-slate-400 leading-tight">
+              <div className="mt-2 text-[11px] text-slate-400 leading-tight">
                 Horas equivalentes de operación a plena carga nominal (8.760 horas/año).
               </div>
             </div>
 
             {/* 4. Levelized Cost of Energy (LCOE) */}
-            <div className="bg-gradient-to-br from-yellow-500/15 via-slate-950/80 to-slate-950 border border-yellow-500/30 rounded-xl p-4 relative overflow-hidden group hover:border-yellow-500/60 transition">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
-                <span className="flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-yellow-400" />
-                  Costo Nivelado (LCOE)
-                </span>
-                <span className="text-[10px] bg-yellow-500/10 text-yellow-300 px-1.5 py-0.5 rounded font-mono">
-                  USD/MWh
-                </span>
+            <div className="bg-gradient-to-br from-yellow-500/15 via-slate-950/80 to-slate-950 border border-yellow-500/30 rounded-xl p-4 relative overflow-hidden group hover:border-yellow-500/60 transition flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+                  <span className="flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-yellow-400" />
+                    Costo Nivelado (LCOE)
+                  </span>
+                  <button
+                    onClick={() =>
+                      setActiveMetricModal({
+                        id: 'lcoe',
+                        value: `$${projections.lcoeUsdMwh} USD/MWh`,
+                      })
+                    }
+                    className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-yellow-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
+                    title="Ver cálculo de LCOE"
+                    aria-label="Ver cálculo de LCOE"
+                  >
+                    <Info className="w-4 h-4 text-yellow-400" />
+                  </button>
+                </div>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  <span className="text-2xl sm:text-3xl font-black text-yellow-300 tracking-tight">
+                    ${projections.lcoeUsdMwh}
+                  </span>
+                  <span className="text-xs text-yellow-400/80 font-bold">USD/MWh</span>
+                </div>
               </div>
-              <div className="mt-2.5 flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-black text-yellow-300 tracking-tight">
-                  ${projections.lcoeUsdMwh}
-                </span>
-                <span className="text-xs text-yellow-400/80 font-bold">USD/MWh</span>
-              </div>
-              <div className="mt-1.5 text-[11px] text-slate-400 leading-tight">
+              <div className="mt-2 text-[11px] text-slate-400 leading-tight">
                 Costo total por cada megavatio-hora producido a lo largo de 25 años.
               </div>
             </div>
@@ -288,10 +338,21 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
           {/* Secondary Industry Metrics Grid (Financial & Radiation) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {/* Plane of Array Irradiance */}
-            <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1">
               <div className="text-[11px] text-slate-400 font-semibold flex items-center justify-between">
                 <span>Irradiación en Plano (POA)</span>
-                <Sun className="w-3.5 h-3.5 text-amber-400" />
+                <button
+                  onClick={() =>
+                    setActiveMetricModal({
+                      id: 'ghi',
+                      value: `${projections.annualPoaKwhM2} kWh/m²`,
+                    })
+                  }
+                  className="min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-500 hover:text-amber-400"
+                  aria-label="Ver fórmula de radiación solar"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
               </div>
               <div className="text-lg font-black text-white">
                 {projections.annualPoaKwhM2.toLocaleString()}{' '}
@@ -303,10 +364,21 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             </div>
 
             {/* DC / AC Ratio (Inverter Loading Ratio) */}
-            <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1">
               <div className="text-[11px] text-slate-400 font-semibold flex items-center justify-between">
                 <span>DC / AC Ratio (ILR)</span>
-                <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                <button
+                  onClick={() =>
+                    setActiveMetricModal({
+                      id: 'dc_ac_ratio',
+                      value: `${projections.dcAcRatio}x`,
+                    })
+                  }
+                  className="min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-500 hover:text-cyan-400"
+                  aria-label="Ver fórmula de relación DC/AC"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
               </div>
               <div className="text-lg font-black text-white">
                 {projections.dcAcRatio}x
@@ -317,7 +389,7 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             </div>
 
             {/* IRR / TIR */}
-            <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1">
               <div className="text-[11px] text-slate-400 font-semibold flex items-center justify-between">
                 <span>TIR del Proyecto (IRR)</span>
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
@@ -331,10 +403,21 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             </div>
 
             {/* Simple & Discounted Payback */}
-            <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1">
               <div className="text-[11px] text-slate-400 font-semibold flex items-center justify-between">
                 <span>Retorno de Inversión</span>
-                <Clock className="w-3.5 h-3.5 text-yellow-400" />
+                <button
+                  onClick={() =>
+                    setActiveMetricModal({
+                      id: 'payback',
+                      value: `${projections.simplePaybackYears} años`,
+                    })
+                  }
+                  className="min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-500 hover:text-yellow-400"
+                  aria-label="Ver fórmula de amortización"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
               </div>
               <div className="text-lg font-black text-white">
                 {projections.simplePaybackYears}{' '}
@@ -624,6 +707,13 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
           </div>
         </div>
       )}
+
+      {/* Metric Explanation Modal / Dialog */}
+      <MetricExplanationModal
+        metricId={activeMetricModal?.id || null}
+        currentValue={activeMetricModal?.value}
+        onClose={() => setActiveMetricModal(null)}
+      />
     </div>
   );
 };

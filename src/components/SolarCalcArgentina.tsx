@@ -20,6 +20,8 @@ import {
   Award,
   ChevronDown,
   Layers,
+  Info,
+  TrendingUp,
 } from 'lucide-react';
 import { LocationCoords } from '../types';
 import {
@@ -27,6 +29,7 @@ import {
   ArgentinaProvinceInfo,
   detectArgentinaProvince,
 } from '../utils/argentinaSolarFramework';
+import { MetricExplanationModal } from './MetricExplanationModal';
 
 interface SolarCalcArgentinaProps {
   currentLocation: LocationCoords;
@@ -76,6 +79,7 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
   const [studyResult, setStudyResult] = useState<string | null>(null);
   const [groundingLinks, setGroundingLinks] = useState<{ title: string; uri: string }[]>([]);
   const [lastCalculatedData, setLastCalculatedData] = useState<any>(null);
+  const [activeMetricModal, setActiveMetricModal] = useState<{ id: string; value?: string | number } | null>(null);
 
   // Quick preset test cases in Argentina
   const testCases = [
@@ -340,6 +344,149 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
             Exención Ingresos Brutos (IIBB)
           </span>
           <span className="text-[10px] text-slate-400 block">Inyección de excedentes</span>
+        </div>
+      </div>
+
+      {/* Primary Key Metric Cards (Top Section with Info Tooltip Triggers) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs text-slate-400 font-semibold px-1">
+          <span className="flex items-center gap-1.5 text-slate-300 font-bold uppercase tracking-wider text-[11px]">
+            <Award className="w-3.5 h-3.5 text-amber-400" />
+            Métricas Principales de Dimensionamiento y Retorno
+          </span>
+          <span className="text-[11px] text-slate-500 hidden sm:inline">
+            Tocá el icono ⓘ para ver la fórmula y normativa
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Card 1: Potencia Sugerida */}
+          <div className="p-4 bg-gradient-to-br from-amber-500/15 via-slate-950/80 to-slate-950 border border-amber-500/30 rounded-2xl flex flex-col justify-between group hover:border-amber-500/60 transition">
+            <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                Potencia Sugerida
+              </span>
+              <button
+                onClick={() =>
+                  setActiveMetricModal({
+                    id: 'specific_yield',
+                    value: `${lastCalculatedData?.recKwp || 50} kWp`,
+                  })
+                }
+                className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
+                title="Ver fórmula de dimensionamiento"
+                aria-label="Ver fórmula de dimensionamiento"
+              >
+                <Info className="w-4 h-4 text-amber-400" />
+              </button>
+            </div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black text-amber-400">
+                {lastCalculatedData?.recKwp || 50}
+              </span>
+              <span className="text-xs text-amber-300/80 font-bold">kWp DC</span>
+            </div>
+            <div className="mt-2 text-[11px] text-slate-400">
+              Ocupa {lastCalculatedData?.areaOccupied || 300} m² ({lastCalculatedData?.areaPercent || 75}% del techo)
+            </div>
+          </div>
+
+          {/* Card 2: CAPEX Estimado */}
+          <div className="p-4 bg-gradient-to-br from-yellow-500/15 via-slate-950/80 to-slate-950 border border-yellow-500/30 rounded-2xl flex flex-col justify-between group hover:border-yellow-500/60 transition">
+            <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <DollarSign className="w-3.5 h-3.5 text-yellow-400" />
+                Inversión Llave en Mano
+              </span>
+              <button
+                onClick={() =>
+                  setActiveMetricModal({
+                    id: 'capex',
+                    value: `USD ${(lastCalculatedData?.capex || 42000).toLocaleString()}`,
+                  })
+                }
+                className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-yellow-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
+                title="Ver desglose de CAPEX"
+                aria-label="Ver desglose de CAPEX"
+              >
+                <Info className="w-4 h-4 text-yellow-400" />
+              </button>
+            </div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black text-yellow-300">
+                ${(lastCalculatedData?.capex || 42000).toLocaleString()}
+              </span>
+              <span className="text-xs text-yellow-400/80 font-bold">USD</span>
+            </div>
+            <div className="mt-2 text-[11px] text-slate-400">
+              {includeBess ? 'Incluye baterías de respaldo BESS' : 'Sistema On-Grid puro sin baterías'}
+            </div>
+          </div>
+
+          {/* Card 3: Ahorro Anual */}
+          <div className="p-4 bg-gradient-to-br from-emerald-500/15 via-slate-950/80 to-slate-950 border border-emerald-500/30 rounded-2xl flex flex-col justify-between group hover:border-emerald-500/60 transition">
+            <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                Ahorro Anual Estimado
+              </span>
+              <button
+                onClick={() =>
+                  setActiveMetricModal({
+                    id: 'annual_savings',
+                    value: `USD ${(lastCalculatedData?.savings || 7200).toLocaleString()} / año`,
+                  })
+                }
+                className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
+                title="Ver cálculo de ahorro en factura"
+                aria-label="Ver cálculo de ahorro en factura"
+              >
+                <Info className="w-4 h-4 text-emerald-400" />
+              </button>
+            </div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black text-emerald-400">
+                ${(lastCalculatedData?.savings || 7200).toLocaleString()}
+              </span>
+              <span className="text-xs text-emerald-300/80 font-bold">USD/año</span>
+            </div>
+            <div className="mt-2 text-[11px] text-slate-400">
+              Cubre aprox. {lastCalculatedData?.coverage || 65}% de tu factura de {activeProvince.utility}
+            </div>
+          </div>
+
+          {/* Card 4: Payback */}
+          <div className="p-4 bg-gradient-to-br from-cyan-500/15 via-slate-950/80 to-slate-950 border border-cyan-500/30 rounded-2xl flex flex-col justify-between group hover:border-cyan-500/60 transition">
+            <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                Amortización (Payback)
+              </span>
+              <button
+                onClick={() =>
+                  setActiveMetricModal({
+                    id: 'payback',
+                    value: `${lastCalculatedData?.payback || 4.5} años`,
+                  })
+                }
+                className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
+                title="Ver fórmula de amortización"
+                aria-label="Ver fórmula de amortización"
+              >
+                <Info className="w-4 h-4 text-cyan-400" />
+              </button>
+            </div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black text-cyan-400">
+                {lastCalculatedData?.payback || 4.5}
+              </span>
+              <span className="text-xs text-cyan-300/80 font-bold">años</span>
+            </div>
+            <div className="mt-2 text-[11px] text-slate-400">
+              Vida útil garantizada: 25 a 30 años (Tier-1)
+            </div>
+          </div>
         </div>
       </div>
 
@@ -732,6 +879,13 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
           </div>
         </div>
       )}
+
+      {/* Metric Explanation Modal */}
+      <MetricExplanationModal
+        metricId={activeMetricModal?.id || null}
+        currentValue={activeMetricModal?.value}
+        onClose={() => setActiveMetricModal(null)}
+      />
     </div>
   );
 };

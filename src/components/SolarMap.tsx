@@ -269,122 +269,125 @@ export const SolarMap: React.FC<SolarMapProps> = ({
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-0 cursor-crosshair" />
 
-      {/* Top Left: Layer Selector & Solar Overlays */}
-      <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 items-center p-1.5 bg-slate-950/85 backdrop-blur-md rounded-xl border border-slate-700/60 shadow-xl text-xs">
-        <span className="text-slate-400 font-medium px-2 flex items-center gap-1.5">
-          <Layers className="w-3.5 h-3.5 text-amber-400" />
-          Capa:
-        </span>
-        <button
-          onClick={() => setActiveLayer('satellite')}
-          className={`px-2.5 py-1 rounded-lg font-medium transition ${
-            activeLayer === 'satellite'
-              ? 'bg-amber-500 text-slate-950 font-semibold shadow-sm shadow-amber-500/30'
-              : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-          }`}
-        >
-          Satélite HD
-        </button>
-        <button
-          onClick={() => setActiveLayer('topo')}
-          className={`px-2.5 py-1 rounded-lg font-medium transition ${
-            activeLayer === 'topo'
-              ? 'bg-amber-500 text-slate-950 font-semibold shadow-sm shadow-amber-500/30'
-              : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-          }`}
-        >
-          Relieve Topo
-        </button>
-        <button
-          onClick={() => setActiveLayer('dark')}
-          className={`px-2.5 py-1 rounded-lg font-medium transition ${
-            activeLayer === 'dark'
-              ? 'bg-amber-500 text-slate-950 font-semibold shadow-sm shadow-amber-500/30'
-              : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-          }`}
-        >
-          Red Oscura
-        </button>
+      {/* Top Controls: Mobile-First Ergonomic Layout with Generous Spacing */}
+      <div className="absolute top-4 left-4 right-4 z-10 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+        {/* Layer Selector Island */}
+        <div className="pointer-events-auto flex items-center gap-1.5 p-1.5 bg-slate-950/90 backdrop-blur-md rounded-2xl border border-slate-700/70 shadow-2xl">
+          <button
+            onClick={() => setActiveLayer('satellite')}
+            className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              activeLayer === 'satellite'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
+                : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+            }`}
+          >
+            Satélite
+          </button>
+          <button
+            onClick={() => setActiveLayer('topo')}
+            className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              activeLayer === 'topo'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
+                : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+            }`}
+          >
+            Relieve
+          </button>
+          <button
+            onClick={() => setActiveLayer('dark')}
+            className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              activeLayer === 'dark'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
+                : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+            }`}
+          >
+            Oscuro
+          </button>
 
-        <div className="h-4 w-[1px] bg-slate-700 mx-1 hidden sm:block"></div>
+          <div className="h-5 w-[1px] bg-slate-700 mx-1 hidden sm:block"></div>
 
-        {/* Heatmap Toggle */}
-        <button
-          onClick={() => setShowSolarHeatmap(!showSolarHeatmap)}
-          className={`px-2.5 py-1 rounded-lg font-medium flex items-center gap-1.5 transition ${
-            showSolarHeatmap
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-              : 'text-slate-400 hover:bg-slate-800'
-          }`}
-          title="Aura de radiación solar y radio de influencia técnica"
-        >
-          <Eye className="w-3 h-3" />
-          Aura Solar
-        </button>
-      </div>
+          {/* Heatmap Toggle */}
+          <button
+            onClick={() => setShowSolarHeatmap(!showSolarHeatmap)}
+            className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+              showSolarHeatmap
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            }`}
+            title="Aura de radiación solar y radio de influencia técnica"
+          >
+            <Eye className="w-4 h-4" />
+            <span className="hidden sm:inline">Aura Solar</span>
+          </button>
+        </div>
 
-      {/* Top Right: Quick Actions */}
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-        {/* Draw Plot Area Tool */}
-        <button
-          onClick={() => {
-            if (isDrawingPolygon) {
-              setIsDrawingPolygon(false);
-            } else {
-              setIsDrawingPolygon(true);
-              setPolygonPoints([]);
-            }
-          }}
-          className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border shadow-lg transition ${
-            isDrawingPolygon
-              ? 'bg-cyan-500 text-slate-950 border-cyan-400 animate-pulse'
-              : 'bg-slate-950/85 text-slate-200 border-slate-700/60 hover:bg-slate-800 hover:text-white'
-          }`}
-          title="Haz clic en el mapa para marcar los vértices de la parcela y calcular hectáreas"
-        >
-          <Compass className="w-3.5 h-3.5" />
-          {isDrawingPolygon
-            ? `Marcando (${polygonPoints.length} puntos) - Clic para terminar`
-            : polygonPoints.length >= 3
-            ? `Parcela: ${measuredHectares.toFixed(1)} ha`
-            : 'Delimitar Terreno'}
-        </button>
-
-        {polygonPoints.length > 0 && (
+        {/* Map Tool Actions Island (Delimitar, GPS, Fullscreen) with Generous Hitboxes */}
+        <div className="pointer-events-auto flex items-center gap-2.5 p-1.5 bg-slate-950/90 backdrop-blur-md rounded-2xl border border-slate-700/70 shadow-2xl">
+          {/* Draw Plot Area Tool */}
           <button
             onClick={() => {
-              setPolygonPoints([]);
-              if (onTerrainAreaChange) onTerrainAreaChange(10);
+              if (isDrawingPolygon) {
+                setIsDrawingPolygon(false);
+              } else {
+                setIsDrawingPolygon(true);
+                setPolygonPoints([]);
+              }
             }}
-            className="px-2 py-1.5 bg-slate-950/85 hover:bg-rose-950 text-slate-300 hover:text-rose-200 border border-slate-700/60 rounded-xl text-xs"
-            title="Borrar parcela trazada"
+            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-md ${
+              isDrawingPolygon
+                ? 'bg-cyan-500 text-slate-950 border border-cyan-400 animate-pulse'
+                : 'bg-slate-900 text-slate-200 border border-slate-700/60 hover:bg-slate-800 hover:text-white'
+            }`}
+            title="Haz clic en el mapa para marcar los vértices de la parcela y calcular hectáreas"
           >
-            ✕
+            <Compass className="w-4 h-4 text-cyan-400" />
+            <span>
+              {isDrawingPolygon
+                ? `Marcando (${polygonPoints.length})`
+                : polygonPoints.length >= 3
+                ? `${measuredHectares.toFixed(1)} ha`
+                : 'Delimitar Terreno'}
+            </span>
           </button>
-        )}
 
-        {/* Locate me */}
-        <button
-          onClick={handleLocateMe}
-          className="p-2 bg-slate-950/85 hover:bg-slate-800 text-slate-300 hover:text-amber-400 rounded-xl border border-slate-700/60 backdrop-blur-md shadow-lg transition"
-          title="Centrar en mi ubicación GPS actual"
-        >
-          <Crosshair className="w-4 h-4" />
-        </button>
+          {polygonPoints.length > 0 && (
+            <button
+              onClick={() => {
+                setPolygonPoints([]);
+                if (onTerrainAreaChange) onTerrainAreaChange(10);
+              }}
+              className="min-h-[44px] min-w-[44px] px-3 py-2 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/50 rounded-xl text-xs font-bold flex items-center justify-center transition cursor-pointer"
+              title="Borrar parcela trazada"
+            >
+              ✕
+            </button>
+          )}
 
-        {/* Fullscreen toggle */}
-        <button
-          onClick={() => setIsFullscreen(!isFullscreen)}
-          className="p-2 bg-slate-950/85 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-700/60 backdrop-blur-md shadow-lg transition"
-          title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
-        >
-          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-        </button>
+          {/* Locate me */}
+          <button
+            onClick={handleLocateMe}
+            className="min-h-[44px] min-w-[44px] p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-amber-400 rounded-xl border border-slate-700/60 flex items-center justify-center transition cursor-pointer shadow-md"
+            title="Centrar en mi ubicación GPS actual"
+            aria-label="Centrar en mi ubicación GPS actual"
+          >
+            <Crosshair className="w-4 h-4" />
+          </button>
+
+          {/* Fullscreen toggle */}
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="min-h-[44px] min-w-[44px] p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-700/60 flex items-center justify-center transition cursor-pointer shadow-md"
+            title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+            aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
-      {/* Bottom Floating Info Badge */}
-      <div className="absolute bottom-3 left-3 z-10 flex flex-wrap items-center gap-2 p-2 bg-slate-950/90 backdrop-blur-md rounded-xl border border-slate-800/80 shadow-2xl text-xs max-w-[90%] pointer-events-auto">
-        <div className="flex items-center gap-1.5 text-amber-400 font-semibold px-2 py-0.5 bg-amber-500/10 rounded-lg border border-amber-500/20">
+      {/* Bottom Floating Info Badge with Generous Margins & Clear Touch Targets */}
+      <div className="absolute bottom-4 left-4 right-4 sm:right-auto z-10 flex flex-wrap items-center gap-2.5 p-3 bg-slate-950/95 backdrop-blur-md rounded-2xl border border-slate-800/90 shadow-2xl text-xs max-w-full sm:max-w-md pointer-events-auto">
+        <div className="flex items-center gap-1.5 text-amber-400 font-bold px-2.5 py-1 bg-amber-500/10 rounded-xl border border-amber-500/20">
           <MapPin className="w-3.5 h-3.5" />
           <span>
             {location.lat >= 0 ? `${location.lat.toFixed(4)}°N` : `${Math.abs(location.lat).toFixed(4)}°S`},{' '}
@@ -392,13 +395,13 @@ export const SolarMap: React.FC<SolarMapProps> = ({
           </span>
         </div>
 
-        <div className="text-slate-300 truncate max-w-xs font-medium">
+        <div className="text-slate-200 truncate flex-1 font-semibold">
           {location.name || 'Emplazamiento Solar Seleccionado'}
         </div>
 
-        <div className="hidden sm:flex items-center gap-1 text-emerald-400 font-medium bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
-          <ShieldCheck className="w-3 h-3" />
-          <span>Haz clic o arrastra el marcador a cualquier punto</span>
+        <div className="w-full sm:w-auto flex items-center gap-1.5 text-slate-400 text-[11px] pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-800">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>Tocá en el mapa o arrastrá el pin</span>
         </div>
       </div>
 
