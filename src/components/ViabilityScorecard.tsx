@@ -138,14 +138,28 @@ export const ViabilityScorecard: React.FC<ViabilityScorecardProps> = ({
             {/* System Capacity */}
             <div className="space-y-1.5">
               <label className="text-slate-300 font-medium flex items-center justify-between">
-                <span>Capacidad de la Planta (MWp):</span>
-                <span className="text-amber-400 font-bold">{config.systemCapacityMw} MWp</span>
+                <span>Tamaño de la planta:</span>
+                <div className="flex items-center gap-1 font-mono font-bold text-amber-400">
+                  <input
+                    type="number"
+                    min="0.1"
+                    max="100"
+                    step="0.1"
+                    value={config.systemCapacityMw}
+                    onChange={(e) => {
+                      const val = Math.max(0.1, parseFloat(e.target.value) || 0.1);
+                      onConfigChange({ ...config, systemCapacityMw: val });
+                    }}
+                    className="w-16 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-right text-xs text-amber-300 focus:outline-none focus:border-amber-500"
+                  />
+                  <span className="text-[11px] text-slate-400">MWp</span>
+                </div>
               </label>
               <input
                 type="range"
-                min="0.5"
-                max="50"
-                step="0.5"
+                min="0.1"
+                max="20"
+                step="0.1"
                 value={config.systemCapacityMw}
                 onChange={(e) =>
                   onConfigChange({ ...config, systemCapacityMw: parseFloat(e.target.value) })

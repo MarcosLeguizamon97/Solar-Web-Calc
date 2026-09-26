@@ -30,6 +30,7 @@ import {
   detectArgentinaProvince,
 } from '../utils/argentinaSolarFramework';
 import { MetricExplanationModal } from './MetricExplanationModal';
+import { MetricHelpTooltip } from './MetricHelpTooltip';
 
 interface SolarCalcArgentinaProps {
   currentLocation: LocationCoords;
@@ -361,25 +362,23 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           {/* Card 1: Potencia Sugerida */}
-          <div className="p-4 bg-gradient-to-br from-amber-500/15 via-slate-950/80 to-slate-950 border border-amber-500/30 rounded-2xl flex flex-col justify-between group hover:border-amber-500/60 transition">
+          <div className="p-4 bg-gradient-to-br from-amber-500/15 via-slate-950/80 to-slate-950 border border-amber-500/30 rounded-2xl flex flex-col justify-between group hover:border-amber-500/60 transition relative overflow-visible">
             <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
               <span className="flex items-center gap-1.5 text-slate-300">
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
                 Potencia Sugerida
               </span>
-              <button
-                onClick={() =>
+              <MetricHelpTooltip
+                metricId="specific_yield"
+                metricTitle="Potencia Fotovoltaica Sugerida"
+                currentValue={`${lastCalculatedData?.recKwp || 50} kWp DC`}
+                onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'specific_yield',
                     value: `${lastCalculatedData?.recKwp || 50} kWp`,
                   })
                 }
-                className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
-                title="Ver fórmula de dimensionamiento"
-                aria-label="Ver fórmula de dimensionamiento"
-              >
-                <Info className="w-4 h-4 text-amber-400" />
-              </button>
+              />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-amber-400">
@@ -393,25 +392,23 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
           </div>
 
           {/* Card 2: CAPEX Estimado */}
-          <div className="p-4 bg-gradient-to-br from-yellow-500/15 via-slate-950/80 to-slate-950 border border-yellow-500/30 rounded-2xl flex flex-col justify-between group hover:border-yellow-500/60 transition">
+          <div className="p-4 bg-gradient-to-br from-yellow-500/15 via-slate-950/80 to-slate-950 border border-yellow-500/30 rounded-2xl flex flex-col justify-between group hover:border-yellow-500/60 transition relative overflow-visible">
             <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
               <span className="flex items-center gap-1.5 text-slate-300">
                 <DollarSign className="w-3.5 h-3.5 text-yellow-400" />
                 Inversión Llave en Mano
               </span>
-              <button
-                onClick={() =>
+              <MetricHelpTooltip
+                metricId="capex"
+                metricTitle="Inversión Inicial Llave en Mano (CAPEX)"
+                currentValue={`USD ${(lastCalculatedData?.capex || 42000).toLocaleString()}`}
+                onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'capex',
                     value: `USD ${(lastCalculatedData?.capex || 42000).toLocaleString()}`,
                   })
                 }
-                className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-yellow-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
-                title="Ver desglose de CAPEX"
-                aria-label="Ver desglose de CAPEX"
-              >
-                <Info className="w-4 h-4 text-yellow-400" />
-              </button>
+              />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-yellow-300">
@@ -425,25 +422,23 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
           </div>
 
           {/* Card 3: Ahorro Anual */}
-          <div className="p-4 bg-gradient-to-br from-emerald-500/15 via-slate-950/80 to-slate-950 border border-emerald-500/30 rounded-2xl flex flex-col justify-between group hover:border-emerald-500/60 transition">
+          <div className="p-4 bg-gradient-to-br from-emerald-500/15 via-slate-950/80 to-slate-950 border border-emerald-500/30 rounded-2xl flex flex-col justify-between group hover:border-emerald-500/60 transition relative overflow-visible">
             <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
               <span className="flex items-center gap-1.5 text-slate-300">
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                 Ahorro Anual Estimado
               </span>
-              <button
-                onClick={() =>
+              <MetricHelpTooltip
+                metricId="annual_savings"
+                metricTitle="Ahorro Anual en Factura Eléctrica"
+                currentValue={`USD ${(lastCalculatedData?.savings || 7200).toLocaleString()} / año`}
+                onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'annual_savings',
                     value: `USD ${(lastCalculatedData?.savings || 7200).toLocaleString()} / año`,
                   })
                 }
-                className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
-                title="Ver cálculo de ahorro en factura"
-                aria-label="Ver cálculo de ahorro en factura"
-              >
-                <Info className="w-4 h-4 text-emerald-400" />
-              </button>
+              />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-emerald-400">
@@ -457,25 +452,23 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
           </div>
 
           {/* Card 4: Payback */}
-          <div className="p-4 bg-gradient-to-br from-cyan-500/15 via-slate-950/80 to-slate-950 border border-cyan-500/30 rounded-2xl flex flex-col justify-between group hover:border-cyan-500/60 transition">
+          <div className="p-4 bg-gradient-to-br from-cyan-500/15 via-slate-950/80 to-slate-950 border border-cyan-500/30 rounded-2xl flex flex-col justify-between group hover:border-cyan-500/60 transition relative overflow-visible">
             <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
               <span className="flex items-center gap-1.5 text-slate-300">
                 <Clock className="w-3.5 h-3.5 text-cyan-400" />
                 Amortización (Payback)
               </span>
-              <button
-                onClick={() =>
+              <MetricHelpTooltip
+                metricId="payback"
+                metricTitle="Período de Retorno de la Inversión (Payback)"
+                currentValue={`${lastCalculatedData?.payback || 4.5} años`}
+                onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'payback',
                     value: `${lastCalculatedData?.payback || 4.5} años`,
                   })
                 }
-                className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
-                title="Ver fórmula de amortización"
-                aria-label="Ver fórmula de amortización"
-              >
-                <Info className="w-4 h-4 text-cyan-400" />
-              </button>
+              />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-cyan-400">

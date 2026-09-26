@@ -52,7 +52,7 @@ export default function App() {
               name: name || 'Ubicación Compartida',
             }
           : null,
-      capacityMw: mw ? parseFloat(mw) : 5,
+      capacityMw: mw ? parseFloat(mw) : 0.5,
       technology: (tech as SolarSystemConfig['technology']) || 'monocrystalline_tracking',
       tilt: tilt ? parseInt(tilt) : undefined,
       view: view && ['landing', 'kpis', 'calc', 'map', 'audit'].includes(view) ? view : 'landing',
@@ -69,19 +69,19 @@ export default function App() {
     initialParams?.location || SOLAR_PRESETS[0]
   );
 
-  // Measured land area in hectares from map polygon tool
-  const [measuredHectares, setMeasuredHectares] = useState<number>(10);
+  // Measured land area in hectares from map polygon tool (0.5 MWp ~ 0.8 ha)
+  const [measuredHectares, setMeasuredHectares] = useState<number>(0.8);
 
-  // System Configuration State
+  // System Configuration State (Default: 0.5 MWp / 500 kWp)
   const [config, setConfig] = useState<SolarSystemConfig>({
-    systemCapacityMw: initialParams?.capacityMw || 5,
+    systemCapacityMw: initialParams?.capacityMw ?? 0.5,
     technology: initialParams?.technology || 'monocrystalline_tracking',
     panelEfficiencyPercent: 22.0,
     tiltAngleDegrees: initialParams?.tilt ?? calculateOptimalTilt(location.lat),
     azimuthDegrees: location.lat >= 0 ? 180 : 0,
     inverterEfficiencyPercent: 98.5,
     dcAcRatio: 1.25,
-    groundHectares: 10,
+    groundHectares: 0.8,
     electricityPriceUsdMwh: 65,
     capexPerWpUsd: 0.78,
     moduleWattageWp: 585,
@@ -250,13 +250,13 @@ export default function App() {
     }
   };
 
-  // Trigger Gemini analysis automatically on first load or when switching locations
+  // Trigger Gemini analysis automatically on first load or when switching locations/capacity
   useEffect(() => {
     const timer = setTimeout(() => {
       handleGenerateGeminiReport();
     }, 1200);
     return () => clearTimeout(timer);
-  }, [location.lat, location.lng]);
+  }, [location.lat, location.lng, config.systemCapacityMw]);
 
   // Polygon area change handler
   const handleTerrainAreaChange = (ha: number) => {
@@ -296,6 +296,7 @@ export default function App() {
             location={location}
             projections={projections}
             config={config}
+            onConfigChange={setConfig}
             onNavigate={(view) => {
               setActiveView(view);
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -406,8 +407,23 @@ export default function App() {
 
                     <div className="space-y-2.5 text-xs">
                       <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800">
-                        <span className="text-slate-400">Capacidad Proyectada:</span>
-                        <span className="font-bold text-amber-400 text-sm">{config.systemCapacityMw} MWp</span>
+                        <span className="text-slate-400">Tamaño de la planta:</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min="0.1"
+                            max="100"
+                            step="0.1"
+                            value={config.systemCapacityMw}
+                            onChange={(e) => {
+                              const val = Math.max(0.1, parseFloat(e.target.value) || 0.1);
+                              setConfig((prev) => ({ ...prev, systemCapacityMw: val }));
+                            }}
+                            className="w-16 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-right font-mono font-bold text-amber-400 text-xs focus:outline-none focus:border-amber-500"
+                            aria-label="Tamaño de la planta en MWp"
+                          />
+                          <span className="font-bold text-amber-400 text-xs">MWp</span>
+                        </div>
                       </div>
 
                       <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800">

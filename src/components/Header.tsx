@@ -79,14 +79,14 @@ export const Header: React.FC<HeaderProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-lg text-white tracking-tight">
-                  SolarStudio <span className="text-amber-400">Argentina</span>
+                  Heliosite <span className="text-amber-400">Solar</span>
                 </span>
                 <span className="text-[10px] bg-amber-500/20 text-amber-300 font-extrabold px-1.5 py-0.5 rounded border border-amber-500/40 uppercase">
-                  Nacional On-Grid
+                  Argentina On-Grid
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 hidden sm:block">
-                Ingeniería solar e indicadores de la industria • Ley 27.424 & Provincias
+                Ingeniería fotovoltaica, indicadores IEC y marco Ley 27.424
               </p>
             </div>
           </button>

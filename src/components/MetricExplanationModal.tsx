@@ -122,6 +122,18 @@ export const METRIC_EXPLANATIONS: Record<string, MetricDetail> = {
       'El ratio óptimo de ingeniería en Argentina se sitúa entre 1.20 y 1.35.',
     regulatoryOrStandard: 'Recomendaciones de diseño de SMA, Huawei, Fronius y Solis.',
   },
+  irr: {
+    id: 'irr',
+    title: 'Tasa Interna de Retorno (TIR / IRR)',
+    unit: '%',
+    shortDesc: 'Rentabilidad anual proyectada de los flujos de fondos netos generados por el sistema solar.',
+    formula: '0 = -CAPEX + Σ [Flujo_Neto_t / (1 + TIR)^t]',
+    interpretation:
+      'Indica el rendimiento financiero intrínseco del proyecto. Si la TIR supera el costo de oportunidad o tasa de descuento WACC (7.5%), el proyecto crea valor económico neto sustancial.',
+    argentinaBenchmark:
+      'En proyectos solares comerciales e industriales en Argentina la TIR se sitúa entre el 16% y 24% en dólares, convirtiéndose en una excelente cobertura contra incrementos tarifarios.',
+    regulatoryOrStandard: 'Modelado financiero estándar según directrices NREL SAM e IEA PVPS.',
+  },
 };
 
 interface MetricExplanationModalProps {

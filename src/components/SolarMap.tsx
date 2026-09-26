@@ -269,15 +269,15 @@ export const SolarMap: React.FC<SolarMapProps> = ({
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-0 cursor-crosshair" />
 
-      {/* Top Controls: Mobile-First Ergonomic Layout with Generous Spacing */}
-      <div className="absolute top-4 left-4 right-4 z-10 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
-        {/* Layer Selector Island */}
-        <div className="pointer-events-auto flex items-center gap-1.5 p-1.5 bg-slate-950/90 backdrop-blur-md rounded-2xl border border-slate-700/70 shadow-2xl">
+      {/* Top Controls: Mobile-First Ergonomic Layout with Generous Spacing & Mis-click Prevention */}
+      <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 z-10 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+        {/* Layer Selector Island with Generous Spacing */}
+        <div className="pointer-events-auto flex items-center gap-2 p-1.5 bg-slate-950/95 backdrop-blur-md rounded-2xl border border-slate-700/80 shadow-2xl">
           <button
             onClick={() => setActiveLayer('satellite')}
-            className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`min-h-[46px] px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeLayer === 'satellite'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30 font-black'
                 : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
             }`}
           >
@@ -285,9 +285,9 @@ export const SolarMap: React.FC<SolarMapProps> = ({
           </button>
           <button
             onClick={() => setActiveLayer('topo')}
-            className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`min-h-[46px] px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeLayer === 'topo'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30 font-black'
                 : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
             }`}
           >
@@ -295,23 +295,23 @@ export const SolarMap: React.FC<SolarMapProps> = ({
           </button>
           <button
             onClick={() => setActiveLayer('dark')}
-            className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`min-h-[46px] px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeLayer === 'dark'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30 font-black'
                 : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
             }`}
           >
             Oscuro
           </button>
 
-          <div className="h-5 w-[1px] bg-slate-700 mx-1 hidden sm:block"></div>
+          <div className="h-5 w-[1px] bg-slate-700 mx-0.5 hidden sm:block"></div>
 
           {/* Heatmap Toggle */}
           <button
             onClick={() => setShowSolarHeatmap(!showSolarHeatmap)}
-            className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+            className={`min-h-[46px] px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
               showSolarHeatmap
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
                 : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
             }`}
             title="Aura de radiación solar y radio de influencia técnica"
@@ -321,8 +321,8 @@ export const SolarMap: React.FC<SolarMapProps> = ({
           </button>
         </div>
 
-        {/* Map Tool Actions Island (Delimitar, GPS, Fullscreen) with Generous Hitboxes */}
-        <div className="pointer-events-auto flex items-center gap-2.5 p-1.5 bg-slate-950/90 backdrop-blur-md rounded-2xl border border-slate-700/70 shadow-2xl">
+        {/* Map Tool Actions Island (Delimitar, GPS, Fullscreen) with Generous Hitboxes and Safe Margins */}
+        <div className="pointer-events-auto flex items-center gap-3 p-1.5 bg-slate-950/95 backdrop-blur-md rounded-2xl border border-slate-700/80 shadow-2xl">
           {/* Draw Plot Area Tool */}
           <button
             onClick={() => {
@@ -333,14 +333,14 @@ export const SolarMap: React.FC<SolarMapProps> = ({
                 setPolygonPoints([]);
               }
             }}
-            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-md ${
+            className={`min-h-[46px] px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-md ${
               isDrawingPolygon
-                ? 'bg-cyan-500 text-slate-950 border border-cyan-400 animate-pulse'
-                : 'bg-slate-900 text-slate-200 border border-slate-700/60 hover:bg-slate-800 hover:text-white'
+                ? 'bg-cyan-500 text-slate-950 border border-cyan-400 font-black animate-pulse'
+                : 'bg-slate-900 text-slate-200 border border-slate-700/80 hover:bg-slate-800 hover:text-white'
             }`}
             title="Haz clic en el mapa para marcar los vértices de la parcela y calcular hectáreas"
           >
-            <Compass className="w-4 h-4 text-cyan-400" />
+            <Compass className={`w-4 h-4 ${isDrawingPolygon ? 'text-slate-950' : 'text-cyan-400'}`} />
             <span>
               {isDrawingPolygon
                 ? `Marcando (${polygonPoints.length})`
@@ -356,7 +356,7 @@ export const SolarMap: React.FC<SolarMapProps> = ({
                 setPolygonPoints([]);
                 if (onTerrainAreaChange) onTerrainAreaChange(10);
               }}
-              className="min-h-[44px] min-w-[44px] px-3 py-2 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/50 rounded-xl text-xs font-bold flex items-center justify-center transition cursor-pointer"
+              className="min-h-[46px] min-w-[46px] px-3.5 py-2 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/50 rounded-xl text-xs font-bold flex items-center justify-center transition cursor-pointer"
               title="Borrar parcela trazada"
             >
               ✕
@@ -366,7 +366,7 @@ export const SolarMap: React.FC<SolarMapProps> = ({
           {/* Locate me */}
           <button
             onClick={handleLocateMe}
-            className="min-h-[44px] min-w-[44px] p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-amber-400 rounded-xl border border-slate-700/60 flex items-center justify-center transition cursor-pointer shadow-md"
+            className="min-h-[46px] min-w-[46px] p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-amber-400 rounded-xl border border-slate-700/80 flex items-center justify-center transition cursor-pointer shadow-md"
             title="Centrar en mi ubicación GPS actual"
             aria-label="Centrar en mi ubicación GPS actual"
           >
@@ -376,7 +376,7 @@ export const SolarMap: React.FC<SolarMapProps> = ({
           {/* Fullscreen toggle */}
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className="min-h-[44px] min-w-[44px] p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-700/60 flex items-center justify-center transition cursor-pointer shadow-md"
+            className="min-h-[46px] min-w-[46px] p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-700/80 flex items-center justify-center transition cursor-pointer shadow-md"
             title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
             aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
           >

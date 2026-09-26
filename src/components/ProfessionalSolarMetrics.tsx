@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { EnergyProjections, SolarSystemConfig, LocationCoords } from '../types';
 import { MetricExplanationModal } from './MetricExplanationModal';
+import { MetricHelpTooltip } from './MetricHelpTooltip';
 
 interface ProfessionalSolarMetricsProps {
   projections: EnergyProjections;
@@ -199,26 +200,24 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* 1. Specific Yield */}
-            <div className="bg-gradient-to-br from-amber-500/15 via-slate-950/80 to-slate-950 border border-amber-500/30 rounded-2xl p-4 relative overflow-hidden group hover:border-amber-500/60 transition flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-amber-500/15 via-slate-950/80 to-slate-950 border border-amber-500/30 rounded-2xl p-4 relative overflow-visible group hover:border-amber-500/60 transition flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
                   <span className="flex items-center gap-1.5">
                     <Zap className="w-3.5 h-3.5 text-amber-400" />
                     Specific Yield (Rendimiento)
                   </span>
-                  <button
-                    onClick={() =>
+                  <MetricHelpTooltip
+                    metricId="specific_yield"
+                    metricTitle="Specific Yield (Rendimiento Específico)"
+                    currentValue={`${projections.specificYieldKwhKwp} kWh/kWp/año`}
+                    onOpenFullModal={() =>
                       setActiveMetricModal({
                         id: 'specific_yield',
                         value: `${projections.specificYieldKwhKwp} kWh/kWp`,
                       })
                     }
-                    className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
-                    title="Ver cálculo de Specific Yield"
-                    aria-label="Ver cálculo de Specific Yield"
-                  >
-                    <Info className="w-4 h-4 text-amber-400" />
-                  </button>
+                  />
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tight">
@@ -233,26 +232,24 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             </div>
 
             {/* 2. Performance Ratio (PR) */}
-            <div className="bg-gradient-to-br from-emerald-500/15 via-slate-950/80 to-slate-950 border border-emerald-500/30 rounded-2xl p-4 relative overflow-hidden group hover:border-emerald-500/60 transition flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-emerald-500/15 via-slate-950/80 to-slate-950 border border-emerald-500/30 rounded-2xl p-4 relative overflow-visible group hover:border-emerald-500/60 transition flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
                   <span className="flex items-center gap-1.5">
                     <Award className="w-3.5 h-3.5 text-emerald-400" />
                     Performance Ratio (PR)
                   </span>
-                  <button
-                    onClick={() =>
+                  <MetricHelpTooltip
+                    metricId="pr"
+                    metricTitle="Performance Ratio (PR)"
+                    currentValue={`${projections.performanceRatio}%`}
+                    onOpenFullModal={() =>
                       setActiveMetricModal({
                         id: 'pr',
                         value: `${projections.performanceRatio}%`,
                       })
                     }
-                    className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
-                    title="Ver cálculo de Performance Ratio"
-                    aria-label="Ver cálculo de Performance Ratio"
-                  >
-                    <Info className="w-4 h-4 text-emerald-400" />
-                  </button>
+                  />
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
@@ -267,26 +264,24 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             </div>
 
             {/* 3. Capacity Factor (CF) */}
-            <div className="bg-gradient-to-br from-cyan-500/15 via-slate-950/80 to-slate-950 border border-cyan-500/30 rounded-2xl p-4 relative overflow-hidden group hover:border-cyan-500/60 transition flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-cyan-500/15 via-slate-950/80 to-slate-950 border border-cyan-500/30 rounded-2xl p-4 relative overflow-visible group hover:border-cyan-500/60 transition flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
                   <span className="flex items-center gap-1.5">
                     <Activity className="w-3.5 h-3.5 text-cyan-400" />
                     Factor de Capacidad (CF)
                   </span>
-                  <button
-                    onClick={() =>
+                  <MetricHelpTooltip
+                    metricId="capacity_factor"
+                    metricTitle="Factor de Capacidad (CF)"
+                    currentValue={`${projections.capacityFactorPercent}%`}
+                    onOpenFullModal={() =>
                       setActiveMetricModal({
                         id: 'capacity_factor',
                         value: `${projections.capacityFactorPercent}%`,
                       })
                     }
-                    className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
-                    title="Ver cálculo de Factor de Capacidad"
-                    aria-label="Ver cálculo de Factor de Capacidad"
-                  >
-                    <Info className="w-4 h-4 text-cyan-400" />
-                  </button>
+                  />
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-cyan-400 tracking-tight">
@@ -301,26 +296,24 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             </div>
 
             {/* 4. Levelized Cost of Energy (LCOE) */}
-            <div className="bg-gradient-to-br from-yellow-500/15 via-slate-950/80 to-slate-950 border border-yellow-500/30 rounded-xl p-4 relative overflow-hidden group hover:border-yellow-500/60 transition flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-yellow-500/15 via-slate-950/80 to-slate-950 border border-yellow-500/30 rounded-xl p-4 relative overflow-visible group hover:border-yellow-500/60 transition flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
                   <span className="flex items-center gap-1.5">
                     <DollarSign className="w-3.5 h-3.5 text-yellow-400" />
                     Costo Nivelado (LCOE)
                   </span>
-                  <button
-                    onClick={() =>
+                  <MetricHelpTooltip
+                    metricId="lcoe"
+                    metricTitle="Costo Nivelado de la Energía (LCOE)"
+                    currentValue={`$${projections.lcoeUsdMwh} USD/MWh`}
+                    onOpenFullModal={() =>
                       setActiveMetricModal({
                         id: 'lcoe',
                         value: `$${projections.lcoeUsdMwh} USD/MWh`,
                       })
                     }
-                    className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 p-2 rounded-xl text-slate-400 hover:text-yellow-400 hover:bg-slate-800/80 transition flex items-center justify-center cursor-pointer"
-                    title="Ver cálculo de LCOE"
-                    aria-label="Ver cálculo de LCOE"
-                  >
-                    <Info className="w-4 h-4 text-yellow-400" />
-                  </button>
+                  />
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-yellow-300 tracking-tight">
@@ -338,21 +331,20 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
           {/* Secondary Industry Metrics Grid (Financial & Radiation) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {/* Plane of Array Irradiance */}
-            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1">
+            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1 relative overflow-visible">
               <div className="text-[11px] text-slate-400 font-semibold flex items-center justify-between">
                 <span>Irradiación en Plano (POA)</span>
-                <button
-                  onClick={() =>
+                <MetricHelpTooltip
+                  metricId="ghi"
+                  metricTitle="Irradiación en Plano de Módulos (POA)"
+                  currentValue={`${projections.annualPoaKwhM2} kWh/m²`}
+                  onOpenFullModal={() =>
                     setActiveMetricModal({
                       id: 'ghi',
                       value: `${projections.annualPoaKwhM2} kWh/m²`,
                     })
                   }
-                  className="min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-500 hover:text-amber-400"
-                  aria-label="Ver fórmula de radiación solar"
-                >
-                  <Info className="w-3.5 h-3.5" />
-                </button>
+                />
               </div>
               <div className="text-lg font-black text-white">
                 {projections.annualPoaKwhM2.toLocaleString()}{' '}
@@ -364,21 +356,20 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             </div>
 
             {/* DC / AC Ratio (Inverter Loading Ratio) */}
-            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1">
+            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1 relative overflow-visible">
               <div className="text-[11px] text-slate-400 font-semibold flex items-center justify-between">
                 <span>DC / AC Ratio (ILR)</span>
-                <button
-                  onClick={() =>
+                <MetricHelpTooltip
+                  metricId="dc_ac_ratio"
+                  metricTitle="Relación DC / AC (Inverter Loading Ratio)"
+                  currentValue={`${projections.dcAcRatio}x`}
+                  onOpenFullModal={() =>
                     setActiveMetricModal({
                       id: 'dc_ac_ratio',
                       value: `${projections.dcAcRatio}x`,
                     })
                   }
-                  className="min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-500 hover:text-cyan-400"
-                  aria-label="Ver fórmula de relación DC/AC"
-                >
-                  <Info className="w-3.5 h-3.5" />
-                </button>
+                />
               </div>
               <div className="text-lg font-black text-white">
                 {projections.dcAcRatio}x
@@ -389,10 +380,20 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             </div>
 
             {/* IRR / TIR */}
-            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1">
+            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1 relative overflow-visible">
               <div className="text-[11px] text-slate-400 font-semibold flex items-center justify-between">
                 <span>TIR del Proyecto (IRR)</span>
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                <MetricHelpTooltip
+                  metricId="irr"
+                  metricTitle="TIR del Proyecto (Tasa Interna de Retorno)"
+                  currentValue={`${projections.irrPercent}%`}
+                  onOpenFullModal={() =>
+                    setActiveMetricModal({
+                      id: 'irr',
+                      value: `${projections.irrPercent}%`,
+                    })
+                  }
+                />
               </div>
               <div className="text-lg font-black text-emerald-400">
                 {projections.irrPercent}%
@@ -403,21 +404,20 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             </div>
 
             {/* Simple & Discounted Payback */}
-            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1">
+            <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800 space-y-1 relative overflow-visible">
               <div className="text-[11px] text-slate-400 font-semibold flex items-center justify-between">
                 <span>Retorno de Inversión</span>
-                <button
-                  onClick={() =>
+                <MetricHelpTooltip
+                  metricId="payback"
+                  metricTitle="Período de Amortización (Payback)"
+                  currentValue={`${projections.simplePaybackYears} años`}
+                  onOpenFullModal={() =>
                     setActiveMetricModal({
                       id: 'payback',
                       value: `${projections.simplePaybackYears} años`,
                     })
                   }
-                  className="min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-500 hover:text-yellow-400"
-                  aria-label="Ver fórmula de amortización"
-                >
-                  <Info className="w-3.5 h-3.5" />
-                </button>
+                />
               </div>
               <div className="text-lg font-black text-white">
                 {projections.simplePaybackYears}{' '}
