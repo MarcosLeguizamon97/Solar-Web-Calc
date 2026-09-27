@@ -15,15 +15,17 @@ import {
   ChevronRight,
   Sparkles,
   Sliders,
+  Layers,
 } from 'lucide-react';
 import { LocationCoords, EnergyProjections, SolarSystemConfig } from '../types';
+import { AppViewMode } from './MobileNavigation';
 
 interface LandingDashboardProps {
   location: LocationCoords;
   projections: EnergyProjections;
   config: SolarSystemConfig;
   onConfigChange?: (newConfig: SolarSystemConfig) => void;
-  onNavigate: (view: 'kpis' | 'calc' | 'map' | 'audit') => void;
+  onNavigate: (view: AppViewMode) => void;
   onOpenLocationSearch: () => void;
   onOpenShareModal: () => void;
 }
@@ -252,35 +254,35 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
             </div>
           </button>
 
-          {/* Card 4: Auditoría de Terreno & Clima en Vivo */}
+          {/* Card 4: Análisis Técnico y Energético */}
           <button
-            onClick={() => onNavigate('audit')}
+            onClick={() => onNavigate('tech_energy')}
             className="group min-h-[120px] p-5 sm:p-6 bg-gradient-to-br from-slate-900/95 via-slate-900 to-slate-950 border border-slate-800 hover:border-amber-500/60 rounded-3xl shadow-xl hover:shadow-2xl hover:shadow-amber-500/10 transition-all text-left flex flex-col justify-between cursor-pointer relative overflow-hidden"
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <ShieldCheck className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Layers className="w-6 h-6" />
               </div>
-              <div className="p-2 rounded-xl bg-slate-800/60 text-slate-400 group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-colors">
+              <div className="p-2 rounded-xl bg-slate-800/60 text-slate-400 group-hover:text-amber-400 group-hover:bg-amber-500/10 transition-colors">
                 <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
 
             <div className="mt-4 space-y-1">
-              <h3 className="text-base sm:text-lg font-black text-white group-hover:text-emerald-400 transition-colors">
-                4. Auditoría Técnica & Clima en Vivo
+              <h3 className="text-base sm:text-lg font-black text-white group-hover:text-amber-400 transition-colors">
+                4. Análisis Técnico y Energético
               </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Evaluación de accesos viales y líneas eléctricas con Google Maps Grounding junto con radiación solar meteorológica en tiempo real.
+                Auditoría con Google Maps Grounding, proyecciones de eficiencia según norma IEC 61724 y simulación numérica del modelado energético.
               </p>
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-              <span className="text-emerald-400 font-bold flex items-center gap-1">
-                Ver Auditoría de Emplazamiento
+              <span className="text-amber-400 font-bold flex items-center gap-1">
+                Ver Análisis Técnico y Energético
                 <ArrowRight className="w-3.5 h-3.5" />
               </span>
-              <span className="text-slate-500 text-[11px]">Google Maps + Open-Meteo</span>
+              <span className="text-slate-500 text-[11px]">Google Maps + IEC 61724</span>
             </div>
           </button>
         </div>

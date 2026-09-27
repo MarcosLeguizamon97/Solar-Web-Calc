@@ -3,13 +3,12 @@ import { Header } from './components/Header';
 import { SolarMap } from './components/SolarMap';
 import { WeatherPanel } from './components/WeatherPanel';
 import { ViabilityScorecard } from './components/ViabilityScorecard';
-import { SolarCharts } from './components/SolarCharts';
-import { GeminiSolarReport } from './components/GeminiSolarReport';
 import { SolarCalcArgentina } from './components/SolarCalcArgentina';
 import { ProfessionalSolarMetrics } from './components/ProfessionalSolarMetrics';
 import { ShareModal } from './components/ShareModal';
 import { LandingDashboard } from './components/LandingDashboard';
 import { MobileNavigation, AppViewMode } from './components/MobileNavigation';
+import { TechnicalEnergyAnalysis } from './components/TechnicalEnergyAnalysis';
 import {
   CurrentWeather,
   DailyForecast,
@@ -55,13 +54,13 @@ export default function App() {
       capacityMw: mw ? parseFloat(mw) : 0.5,
       technology: (tech as SolarSystemConfig['technology']) || 'monocrystalline_tracking',
       tilt: tilt ? parseInt(tilt) : undefined,
-      view: view && ['landing', 'kpis', 'calc', 'map', 'audit'].includes(view) ? view : 'landing',
+      view: view && ['landing', 'tech_energy', 'kpis', 'calc', 'map', 'weather', 'audit'].includes(view) ? (view === 'audit' ? 'tech_energy' : view) : 'landing',
     };
   };
 
   const initialParams = getInitialParams();
 
-  // Active View Tab: 'landing' (Dashboard Inicio) | 'kpis' (Indicadores) | 'calc' (Calculadora) | 'map' (Mapa) | 'audit' (Auditoría)
+  // Active View Tab: 'landing' | 'tech_energy' | 'kpis' | 'calc' | 'map' | 'weather'
   const [activeView, setActiveView] = useState<AppViewMode>(initialParams?.view || 'landing');
 
   // Location State (defaults to Gran Rosario - Villa Gobernador Gálvez)
@@ -473,43 +472,40 @@ export default function App() {
           </div>
         )}
 
-        {/* View 5: Technical Audit (Google Maps Grounding) & Real-time Weather */}
-        {activeView === 'audit' && (
+        {/* View 5: Análisis Técnico y Energético (Auditoría Maps Grounding, Proyecciones de Eficiencia y Modelado Energético) */}
+        {(activeView === 'tech_energy' || activeView === 'audit') && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <MobileNavigation
+              activeView={activeView === 'audit' ? 'tech_energy' : activeView}
+              onSelectView={setActiveView}
+              onOpenShareModal={() => setIsShareModalOpen(true)}
+            />
+            <TechnicalEnergyAnalysis
+              location={location}
+              config={config}
+              onConfigChange={setConfig}
+              projections={projections}
+              geminiState={geminiState}
+              onGenerateGeminiReport={() => handleGenerateGeminiReport(true)}
+              hourlyWeather={weatherData.hourly}
+            />
+          </div>
+        )}
+
+        {/* View 6: Clima y Radiación Meteorológica en Vivo */}
+        {activeView === 'weather' && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <MobileNavigation
               activeView={activeView}
               onSelectView={setActiveView}
               onOpenShareModal={() => setIsShareModalOpen(true)}
             />
-
-            {/* 1. Senior Engineer Feasibility Audit with Google Maps Grounding */}
-            <section>
-              <GeminiSolarReport
-                analysisState={geminiState}
-                onGenerateReport={handleGenerateGeminiReport}
-                location={location}
-                config={config}
-              />
-            </section>
-
-            {/* 2. Real-time Weather & Radiation */}
-            <section>
-              <WeatherPanel
-                weather={weatherData.current}
-                hourly={weatherData.hourly}
-                daily={weatherData.daily}
-                loading={loadingWeather}
-              />
-            </section>
-
-            {/* 3. Solar Charts (12 Months, 24h Hourly Curve) */}
-            <section>
-              <SolarCharts
-                hourly={weatherData.hourly}
-                projections={projections}
-                systemCapacityMw={config.systemCapacityMw}
-              />
-            </section>
+            <WeatherPanel
+              weather={weatherData.current}
+              hourly={weatherData.hourly}
+              daily={weatherData.daily}
+              loading={loadingWeather}
+            />
           </div>
         )}
       </main>

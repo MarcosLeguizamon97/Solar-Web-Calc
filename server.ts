@@ -10,8 +10,20 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function getCliArg(flag: string): string | undefined {
+  const index = process.argv.indexOf(flag);
+  if (index !== -1 && index + 1 < process.argv.length) {
+    return process.argv[index + 1];
+  }
+  return undefined;
+}
+
+const cliPort = getCliArg('--port') || getCliArg('-p');
+const cliHost = getCliArg('--host') || getCliArg('-h');
+const PORT = Number(cliPort || process.env.PORT || 3000);
+const HOST = cliHost || process.env.HOST || '0.0.0.0';
+
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -584,15 +596,30 @@ async function startServer() {
     });
   } else {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        host: HOST,
+        port: PORT,
+        hmr: process.env.DISABLE_HMR !== 'true',
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   }
 
-  app.listen(PORT, () => {
-    console.log(`Solar Plant Analysis Server running at http://localhost:${PORT}`);
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`Solar Plant Analysis Server running at http://${HOST}:${PORT}`);
   });
+
+  const handleShutdown = (signal: string) => {
+    console.log(`Received ${signal}, shutting down gracefully...`);
+    server.close(() => {
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+  process.on('SIGINT', () => handleShutdown('SIGINT'));
 }
 
 startServer();

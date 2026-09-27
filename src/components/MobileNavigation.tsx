@@ -1,7 +1,7 @@
 import React from 'react';
-import { Home, Activity, Zap, MapPin, ShieldCheck, ArrowLeft, Share2 } from 'lucide-react';
+import { Home, Activity, Zap, MapPin, Layers, Sun, ArrowLeft, Share2 } from 'lucide-react';
 
-export type AppViewMode = 'landing' | 'kpis' | 'calc' | 'map' | 'audit';
+export type AppViewMode = 'landing' | 'tech_energy' | 'kpis' | 'calc' | 'map' | 'weather' | 'audit';
 
 interface MobileNavigationProps {
   activeView: AppViewMode;
@@ -22,6 +22,12 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
       icon: <Home className="w-5 h-5" />,
     },
     {
+      id: 'tech_energy',
+      label: 'Análisis Técnico y Energético',
+      shortLabel: 'Técnico',
+      icon: <Layers className="w-5 h-5" />,
+    },
+    {
       id: 'kpis',
       label: 'Indicadores (SolarStudio)',
       shortLabel: 'KPIs',
@@ -29,7 +35,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     },
     {
       id: 'calc',
-      label: 'SolarCalc Argentina (PyME)',
+      label: 'SolarCalc Argentina',
       shortLabel: 'Calculadora',
       icon: <Zap className="w-5 h-5" />,
     },
@@ -40,10 +46,10 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
       icon: <MapPin className="w-5 h-5" />,
     },
     {
-      id: 'audit',
-      label: 'Auditoría & Clima',
-      shortLabel: 'Auditoría',
-      icon: <ShieldCheck className="w-5 h-5" />,
+      id: 'weather',
+      label: 'Clima en Vivo',
+      shortLabel: 'Clima',
+      icon: <Sun className="w-5 h-5" />,
     },
   ];
 
@@ -56,7 +62,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
       >
         <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto max-w-full">
           {navItems.map((item) => {
-            const isActive = activeView === item.id;
+            const isActive = activeView === item.id || (item.id === 'tech_energy' && activeView === 'audit');
             return (
               <button
                 key={item.id}
@@ -89,9 +95,9 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
       {/* 2. Mobile Fixed Bottom Navigation Bar (Thumb-Zone Ergonomics) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/90 shadow-2xl pb-safe">
-        <div className="grid grid-cols-5 items-center h-16 px-1">
+        <div className="grid grid-cols-6 items-center h-16 px-1">
           {navItems.map((item) => {
-            const isActive = activeView === item.id;
+            const isActive = activeView === item.id || (item.id === 'tech_energy' && activeView === 'audit');
             return (
               <button
                 key={item.id}
@@ -108,7 +114,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 >
                   {item.icon}
                 </div>
-                <span className={`text-[10px] tracking-tight leading-none ${isActive ? 'font-bold' : 'font-medium'}`}>
+                <span className={`text-[9px] sm:text-[10px] tracking-tight leading-none truncate max-w-[55px] ${isActive ? 'font-bold' : 'font-medium'}`}>
                   {item.shortLabel}
                 </span>
 
