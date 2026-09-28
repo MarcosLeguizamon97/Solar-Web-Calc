@@ -24,6 +24,7 @@ import {
 import { EnergyProjections, SolarSystemConfig, LocationCoords } from '../types';
 import { MetricExplanationModal } from './MetricExplanationModal';
 import { MetricHelpTooltip } from './MetricHelpTooltip';
+import { formatNumber, formatPercent, formatCurrency } from '../utils/formatters';
 
 interface ProfessionalSolarMetricsProps {
   projections: EnergyProjections;
@@ -107,10 +108,43 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
 
   const currentBenchmark = benchmarkSites[selectedBenchmark] || benchmarkSites.san_juan;
 
+  const kpiTabs: { id: TabMode; label: string; description: string; icon: React.ReactNode }[] = [
+    {
+      id: 'kpis',
+      label: 'KPIs Principales',
+      description: 'PR, Yield & LCOE',
+      icon: <Activity className="w-4 h-4" />,
+    },
+    {
+      id: 'losses',
+      label: 'Cascada de Pérdidas',
+      description: 'Sankey de eficiencia',
+      icon: <PieChart className="w-4 h-4" />,
+    },
+    {
+      id: 'cashflow',
+      label: 'Flujo 25 Años',
+      description: 'TIR, CAPEX y OPEX',
+      icon: <TrendingUp className="w-4 h-4" />,
+    },
+    {
+      id: 'sizing',
+      label: 'Ratios Técnicos',
+      description: 'DC/AC e Inclinación',
+      icon: <Sliders className="w-4 h-4" />,
+    },
+    {
+      id: 'benchmark',
+      label: 'Comparador Multi-Sitio',
+      description: 'vs. Cauchari / Cuyo',
+      icon: <BarChart3 className="w-4 h-4" />,
+    },
+  ];
+
   return (
     <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-2xl backdrop-blur-md space-y-6">
       {/* Header with Professional Tag and Scenario Switcher */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="space-y-4 border-b border-slate-800 pb-5">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
@@ -127,71 +161,49 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             Tablero de Indicadores Clave de Desempeño (KPIs)
           </h3>
           <p className="text-xs text-slate-400">
-            Proyección del emplazamiento en <strong className="text-slate-200">{location.name}</strong> para una planta de <strong className="text-amber-400">{config.systemCapacityMw} MWp</strong> ({projections.dcCapacityKwp.toLocaleString()} kWp DC).
+            Proyección del emplazamiento en <strong className="text-slate-200">{location.name}</strong> para una planta de <strong className="text-amber-400">{formatNumber(config.systemCapacityMw, 1)} MWp</strong> ({formatNumber(projections.dcCapacityKwp)} kWp DC).
           </p>
         </div>
 
-        {/* Tab Buttons */}
-        <div className="flex items-center gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-xs overflow-x-auto max-w-full">
-          <button
-            onClick={() => setActiveTab('kpis')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 shrink-0 ${
-              activeTab === 'kpis'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5" />
-            <span>KPIs Principales</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('losses')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 shrink-0 ${
-              activeTab === 'losses'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <PieChart className="w-3.5 h-3.5" />
-            <span>Cascada de Pérdidas</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('cashflow')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 shrink-0 ${
-              activeTab === 'cashflow'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>Flujo 25 Años</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('sizing')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 shrink-0 ${
-              activeTab === 'sizing'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Ratios Técnicos</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('benchmark')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 shrink-0 ${
-              activeTab === 'benchmark'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span>Comparador Multi-Sitio</span>
-          </button>
+        {/* Sub-Pestañas en diseño adaptable (Wrap / Grilla adaptable, sin barra de desplazamiento horizontal) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 pt-1">
+          {kpiTabs.map((tab) => {
+            const isSelected = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`p-3 rounded-2xl text-left transition-all duration-200 flex flex-col justify-between gap-2 cursor-pointer border ${
+                  isSelected
+                    ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-lg shadow-amber-500/25 ring-2 ring-amber-400/30'
+                    : 'bg-slate-950/80 hover:bg-slate-900 text-slate-300 hover:text-white border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div
+                    className={`p-1.5 rounded-xl ${
+                      isSelected
+                        ? 'bg-slate-950/20 text-slate-950'
+                        : 'bg-slate-900 text-amber-400 border border-slate-800'
+                    }`}
+                  >
+                    {tab.icon}
+                  </div>
+                  {isSelected && (
+                    <span className="w-2 h-2 rounded-full bg-slate-950"></span>
+                  )}
+                </div>
+                <div>
+                  <div className={`text-xs font-bold leading-tight ${isSelected ? 'text-slate-950 font-black' : 'text-white'}`}>
+                    {tab.label}
+                  </div>
+                  <div className={`text-[10px] leading-tight mt-0.5 truncate ${isSelected ? 'text-slate-900 font-semibold' : 'text-slate-400'}`}>
+                    {tab.description}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -210,18 +222,18 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
                   <MetricHelpTooltip
                     metricId="specific_yield"
                     metricTitle="Specific Yield (Rendimiento Específico)"
-                    currentValue={`${projections.specificYieldKwhKwp} kWh/kWp/año`}
+                    currentValue={`${formatNumber(projections.specificYieldKwhKwp)} kWh/kWp/año`}
                     onOpenFullModal={() =>
                       setActiveMetricModal({
                         id: 'specific_yield',
-                        value: `${projections.specificYieldKwhKwp} kWh/kWp`,
+                        value: `${formatNumber(projections.specificYieldKwhKwp)} kWh/kWp`,
                       })
                     }
                   />
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tight">
-                    {projections.specificYieldKwhKwp.toLocaleString()}
+                    {formatNumber(projections.specificYieldKwhKwp)}
                   </span>
                   <span className="text-xs text-amber-300/80 font-bold">kWh/kWp</span>
                 </div>
@@ -242,18 +254,18 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
                   <MetricHelpTooltip
                     metricId="pr"
                     metricTitle="Performance Ratio (PR)"
-                    currentValue={`${projections.performanceRatio}%`}
+                    currentValue={`${formatPercent(projections.performanceRatio)}`}
                     onOpenFullModal={() =>
                       setActiveMetricModal({
                         id: 'pr',
-                        value: `${projections.performanceRatio}%`,
+                        value: `${formatPercent(projections.performanceRatio)}`,
                       })
                     }
                   />
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
-                    {projections.performanceRatio}%
+                    {formatPercent(projections.performanceRatio)}
                   </span>
                   <span className="text-xs text-emerald-300/80 font-bold">de eficiencia real</span>
                 </div>
@@ -274,18 +286,18 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
                   <MetricHelpTooltip
                     metricId="capacity_factor"
                     metricTitle="Factor de Capacidad (CF)"
-                    currentValue={`${projections.capacityFactorPercent}%`}
+                    currentValue={`${formatPercent(projections.capacityFactorPercent)}`}
                     onOpenFullModal={() =>
                       setActiveMetricModal({
                         id: 'capacity_factor',
-                        value: `${projections.capacityFactorPercent}%`,
+                        value: `${formatPercent(projections.capacityFactorPercent)}`,
                       })
                     }
                   />
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-cyan-400 tracking-tight">
-                    {projections.capacityFactorPercent}%
+                    {formatPercent(projections.capacityFactorPercent)}
                   </span>
                   <span className="text-xs text-cyan-300/80 font-bold">anual</span>
                 </div>
@@ -306,18 +318,18 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
                   <MetricHelpTooltip
                     metricId="lcoe"
                     metricTitle="Costo Nivelado de la Energía (LCOE)"
-                    currentValue={`$${projections.lcoeUsdMwh} USD/MWh`}
+                    currentValue={`$${formatNumber(projections.lcoeUsdMwh, 1)} USD/MWh`}
                     onOpenFullModal={() =>
                       setActiveMetricModal({
                         id: 'lcoe',
-                        value: `$${projections.lcoeUsdMwh} USD/MWh`,
+                        value: `$${formatNumber(projections.lcoeUsdMwh, 1)} USD/MWh`,
                       })
                     }
                   />
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-yellow-300 tracking-tight">
-                    ${projections.lcoeUsdMwh}
+                    ${formatNumber(projections.lcoeUsdMwh, 1)}
                   </span>
                   <span className="text-xs text-yellow-400/80 font-bold">USD/MWh</span>
                 </div>
@@ -337,21 +349,21 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
                 <MetricHelpTooltip
                   metricId="ghi"
                   metricTitle="Irradiación en Plano de Módulos (POA)"
-                  currentValue={`${projections.annualPoaKwhM2} kWh/m²`}
+                  currentValue={`${formatNumber(projections.annualPoaKwhM2)} kWh/m²`}
                   onOpenFullModal={() =>
                     setActiveMetricModal({
                       id: 'ghi',
-                      value: `${projections.annualPoaKwhM2} kWh/m²`,
+                      value: `${formatNumber(projections.annualPoaKwhM2)} kWh/m²`,
                     })
                   }
                 />
               </div>
               <div className="text-lg font-black text-white">
-                {projections.annualPoaKwhM2.toLocaleString()}{' '}
+                {formatNumber(projections.annualPoaKwhM2)}{' '}
                 <span className="text-xs font-normal text-slate-400">kWh/m²</span>
               </div>
               <div className="text-[10px] text-slate-500">
-                GHI: {projections.annualGhiKwhM2.toLocaleString()} | DNI: {projections.annualDniKwhM2.toLocaleString()}
+                GHI: {formatNumber(projections.annualGhiKwhM2)} | DNI: {formatNumber(projections.annualDniKwhM2)}
               </div>
             </div>
 
@@ -362,20 +374,20 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
                 <MetricHelpTooltip
                   metricId="dc_ac_ratio"
                   metricTitle="Relación DC / AC (Inverter Loading Ratio)"
-                  currentValue={`${projections.dcAcRatio}x`}
+                  currentValue={`${formatNumber(projections.dcAcRatio, 2)}x`}
                   onOpenFullModal={() =>
                     setActiveMetricModal({
                       id: 'dc_ac_ratio',
-                      value: `${projections.dcAcRatio}x`,
+                      value: `${formatNumber(projections.dcAcRatio, 2)}x`,
                     })
                   }
                 />
               </div>
               <div className="text-lg font-black text-white">
-                {projections.dcAcRatio}x
+                {formatNumber(projections.dcAcRatio, 2)}x
               </div>
               <div className="text-[10px] text-slate-500">
-                DC: {projections.dcCapacityKwp} kWp / AC: {projections.acCapacityKw} kWac
+                DC: {formatNumber(projections.dcCapacityKwp)} kWp / AC: {formatNumber(projections.acCapacityKw)} kWac
               </div>
             </div>
 
@@ -386,20 +398,20 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
                 <MetricHelpTooltip
                   metricId="irr"
                   metricTitle="TIR del Proyecto (Tasa Interna de Retorno)"
-                  currentValue={`${projections.irrPercent}%`}
+                  currentValue={`${formatPercent(projections.irrPercent)}`}
                   onOpenFullModal={() =>
                     setActiveMetricModal({
                       id: 'irr',
-                      value: `${projections.irrPercent}%`,
+                      value: `${formatPercent(projections.irrPercent)}`,
                     })
                   }
                 />
               </div>
               <div className="text-lg font-black text-emerald-400">
-                {projections.irrPercent}%
+                {formatPercent(projections.irrPercent)}
               </div>
               <div className="text-[10px] text-slate-500">
-                VAN: +${(projections.npvUsd / 1000).toFixed(0)}k USD (WACC {config.discountRatePercent || 7.5}%)
+                VAN: +${formatNumber(Math.round(projections.npvUsd / 1000))}k USD (WACC {formatPercent(config.discountRatePercent || 7.5)})
               </div>
             </div>
 
@@ -410,21 +422,21 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
                 <MetricHelpTooltip
                   metricId="payback"
                   metricTitle="Período de Amortización (Payback)"
-                  currentValue={`${projections.simplePaybackYears} años`}
+                  currentValue={`${formatNumber(projections.simplePaybackYears, 1)} años`}
                   onOpenFullModal={() =>
                     setActiveMetricModal({
                       id: 'payback',
-                      value: `${projections.simplePaybackYears} años`,
+                      value: `${formatNumber(projections.simplePaybackYears, 1)} años`,
                     })
                   }
                 />
               </div>
               <div className="text-lg font-black text-white">
-                {projections.simplePaybackYears}{' '}
+                {formatNumber(projections.simplePaybackYears, 1)}{' '}
                 <span className="text-xs font-normal text-slate-400">años (simple)</span>
               </div>
               <div className="text-[10px] text-slate-500">
-                Descontado: {projections.discountedPaybackYears} años
+                Descontado: {formatNumber(projections.discountedPaybackYears, 1)} años
               </div>
             </div>
           </div>
@@ -436,7 +448,7 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
               <span>Diagnóstico de Bancabilidad y Viabilidad de Ingeniería</span>
             </div>
             <p className="leading-relaxed text-slate-400">
-              Con un <strong>Rendimiento Específico de {projections.specificYieldKwhKwp.toLocaleString()} kWh/kWp/año</strong> y un <strong>Performance Ratio del {projections.performanceRatio}%</strong>, el emplazamiento califica como <strong>{projections.viabilityGrade}</strong> para financiamiento estructurado de proyectos (Project Finance). La planta generará en su primer año <strong>{projections.annualGenerationMwh.toLocaleString()} MWh</strong> y un acumulado de <strong>{projections.lifetimeGenerationMwh.toLocaleString()} MWh</strong> a lo largo de 25 años considerando una tasa de degradación de {config.annualDegradationPercent || 0.45}%/año.
+              Con un <strong>Rendimiento Específico de {formatNumber(projections.specificYieldKwhKwp)} kWh/kWp/año</strong> y un <strong>Performance Ratio del {formatPercent(projections.performanceRatio)}</strong>, el emplazamiento califica como <strong>{projections.viabilityGrade}</strong> para financiamiento estructurado de proyectos (Project Finance). La planta generará en su primer año <strong>{formatNumber(projections.annualGenerationMwh)} MWh</strong> y un acumulado de <strong>{formatNumber(projections.lifetimeGenerationMwh)} MWh</strong> a lo largo de 25 años considerando una tasa de degradación de {formatPercent(config.annualDegradationPercent || 0.45, 2)}/año.
             </p>
           </div>
         </div>
@@ -484,10 +496,10 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
                           : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                       }`}
                     >
-                      {isZero ? 'Base 100%' : isGain ? `+${Math.abs(step.lossPercent)}%` : `-${step.lossPercent}%`}
+                      {isZero ? 'Base 100%' : isGain ? `+${formatPercent(Math.abs(step.lossPercent))}` : `-${formatPercent(step.lossPercent)}`}
                     </span>
                     <span className="text-slate-400 font-mono text-xs w-28 text-right">
-                      {step.valueKwhM2OrMwh.toLocaleString()} {step.category === 'irradiance' ? 'kWh/m²' : 'MWh/año'}
+                      {formatNumber(step.valueKwhM2OrMwh)} {step.category === 'irradiance' ? 'kWh/m²' : 'MWh/año'}
                     </span>
                   </div>
                 </div>
@@ -499,7 +511,7 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             <Info className="w-4 h-4 text-cyan-400 shrink-0" />
             <span>
               La principal causa de pérdida en este emplazamiento es la{' '}
-              <strong>Pérdida Térmica por Temperatura (-{projections.tempLossPercent}%)</strong>, derivada de una temperatura de celda estimada en operación de {projections.averageCellTempC}°C.
+              <strong>Pérdida Térmica por Temperatura (-{formatPercent(projections.tempLossPercent)})</strong>, derivada de una temperatura de celda estimada en operación de {formatNumber(projections.averageCellTempC, 1)}°C.
             </span>
           </div>
         </div>
@@ -511,7 +523,7 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
           <div className="flex items-center justify-between text-xs text-slate-400 px-1">
             <span>Proyección de Flujo de Caja a 25 Años (Con Degradación y Repowering de Inversores)</span>
             <span className="font-bold text-amber-400">
-              Inversión Inicial: ${(projections.capexTotalUsd / 1000).toFixed(0)}k USD
+              Inversión Inicial: ${formatNumber(Math.round(projections.capexTotalUsd / 1000))}k USD
             </span>
           </div>
 
@@ -539,16 +551,16 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
                     <td className="py-2 px-3 font-sans font-bold text-white">
                       Año {row.year} {row.year === 13 && <span className="text-[9px] text-amber-400 font-sans">(Repotenciación Inversores)</span>}
                     </td>
-                    <td className="py-2 px-3">{row.generationMwh.toLocaleString()}</td>
-                    <td className="py-2 px-3 text-emerald-400">${row.grossRevenueUsd.toLocaleString()}</td>
-                    <td className="py-2 px-3 text-rose-300">-${row.opexUsd.toLocaleString()}</td>
-                    <td className="py-2 px-3 font-bold text-white">${row.netCashFlowUsd.toLocaleString()}</td>
+                    <td className="py-2 px-3">{formatNumber(row.generationMwh)}</td>
+                    <td className="py-2 px-3 text-emerald-400">${formatNumber(row.grossRevenueUsd)}</td>
+                    <td className="py-2 px-3 text-rose-300">-${formatNumber(row.opexUsd)}</td>
+                    <td className="py-2 px-3 font-bold text-white">${formatNumber(row.netCashFlowUsd)}</td>
                     <td
                       className={`py-2 px-3 font-bold ${
                         row.cumulativeCashFlowUsd >= 0 ? 'text-emerald-400' : 'text-amber-400'
                       }`}
                     >
-                      ${row.cumulativeCashFlowUsd.toLocaleString()}
+                      ${formatNumber(row.cumulativeCashFlowUsd)}
                     </td>
                   </tr>
                 ))}
@@ -560,19 +572,19 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             <div>
               <span className="text-slate-400">Punto de Equilibrio (Payback):</span>
               <div className="font-extrabold text-amber-400 text-sm">
-                Año {projections.simplePaybackYears}
+                Año {formatNumber(projections.simplePaybackYears, 1)}
               </div>
             </div>
             <div>
               <span className="text-slate-400">TIR del Proyecto (25 Años):</span>
               <div className="font-extrabold text-emerald-400 text-sm">
-                {projections.irrPercent}%
+                {formatPercent(projections.irrPercent)}
               </div>
             </div>
             <div>
               <span className="text-slate-400">Flujo Neto Acumulado Final:</span>
               <div className="font-extrabold text-white text-sm">
-                ${(projections.twentyFiveYearCashFlow[24]?.cumulativeCashFlowUsd / 1000).toFixed(0)}k USD
+                ${formatNumber(Math.round(projections.twentyFiveYearCashFlow[24]?.cumulativeCashFlowUsd / 1000))}k USD
               </div>
             </div>
           </div>
@@ -591,10 +603,10 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-1">
               <span className="text-slate-400 font-semibold">Módulos Fotovoltaicos Tier-1:</span>
               <div className="text-xl font-black text-amber-400">
-                {projections.moduleCount.toLocaleString()} paneles
+                {formatNumber(projections.moduleCount)} paneles
               </div>
               <p className="text-[11px] text-slate-500">
-                Basado en paneles bifaciales de {config.moduleWattageWp || 585} Wp (Eficiencia: {config.panelEfficiencyPercent}%).
+                Basado en paneles bifaciales de {formatNumber(config.moduleWattageWp || 585)} Wp (Eficiencia: {formatPercent(config.panelEfficiencyPercent)}).
               </p>
             </div>
 
@@ -602,10 +614,10 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-1">
               <span className="text-slate-400 font-semibold">Potencia y Unidades de Inversor:</span>
               <div className="text-xl font-black text-cyan-400">
-                {projections.inverterCount} unidades ({projections.acCapacityKw} kWac)
+                {formatNumber(projections.inverterCount)} unidades ({formatNumber(projections.acCapacityKw)} kWac)
               </div>
               <p className="text-[11px] text-slate-500">
-                Inverter Loading Ratio (ILR): {projections.dcAcRatio}x (Eficiencia de conversión: {config.inverterEfficiencyPercent}%).
+                Inverter Loading Ratio (ILR): {formatNumber(projections.dcAcRatio, 2)}x (Eficiencia de conversión: {formatPercent(config.inverterEfficiencyPercent)}).
               </p>
             </div>
 
@@ -613,7 +625,7 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
             <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-1">
               <span className="text-slate-400 font-semibold">Factor de Ocupación (GCR):</span>
               <div className="text-xl font-black text-emerald-400">
-                {projections.groundCoverRatioPercent}% GCR
+                {formatPercent(projections.groundCoverRatioPercent)} GCR
               </div>
               <p className="text-[11px] text-slate-500">
                 Espaciamiento (Pitch) calibrado para evitar pérdidas por sombreado mutuo inter-fila en solsticio de invierno.
@@ -657,48 +669,48 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
               <tbody className="divide-y divide-slate-800/60 font-mono text-xs">
                 <tr>
                   <td className="py-2.5 px-4 font-sans text-white font-medium">GHI Anual (Horizontal)</td>
-                  <td className="py-2.5 px-4 text-amber-300 font-bold">{projections.annualGhiKwhM2} kWh/m²</td>
-                  <td className="py-2.5 px-4 text-cyan-300">{currentBenchmark.ghi} kWh/m²</td>
+                  <td className="py-2.5 px-4 text-amber-300 font-bold">{formatNumber(projections.annualGhiKwhM2)} kWh/m²</td>
+                  <td className="py-2.5 px-4 text-cyan-300">{formatNumber(currentBenchmark.ghi)} kWh/m²</td>
                   <td className="py-2.5 px-4">
                     {projections.annualGhiKwhM2 >= currentBenchmark.ghi ? (
-                      <span className="text-emerald-400">+{((projections.annualGhiKwhM2 / currentBenchmark.ghi - 1) * 100).toFixed(1)}%</span>
+                      <span className="text-emerald-400">+{formatPercent((projections.annualGhiKwhM2 / currentBenchmark.ghi - 1) * 100, 1)}</span>
                     ) : (
-                      <span className="text-rose-400">-{( (1 - projections.annualGhiKwhM2 / currentBenchmark.ghi) * 100).toFixed(1)}%</span>
+                      <span className="text-rose-400">-{formatPercent((1 - projections.annualGhiKwhM2 / currentBenchmark.ghi) * 100, 1)}</span>
                     )}
                   </td>
                 </tr>
 
                 <tr>
                   <td className="py-2.5 px-4 font-sans text-white font-medium">Specific Yield (Rendimiento)</td>
-                  <td className="py-2.5 px-4 text-amber-300 font-bold">{projections.specificYieldKwhKwp} kWh/kWp</td>
-                  <td className="py-2.5 px-4 text-cyan-300">{currentBenchmark.specificYield} kWh/kWp</td>
+                  <td className="py-2.5 px-4 text-amber-300 font-bold">{formatNumber(projections.specificYieldKwhKwp)} kWh/kWp</td>
+                  <td className="py-2.5 px-4 text-cyan-300">{formatNumber(currentBenchmark.specificYield)} kWh/kWp</td>
                   <td className="py-2.5 px-4">
                     {projections.specificYieldKwhKwp >= currentBenchmark.specificYield ? (
-                      <span className="text-emerald-400">+{((projections.specificYieldKwhKwp / currentBenchmark.specificYield - 1) * 100).toFixed(1)}%</span>
+                      <span className="text-emerald-400">+{formatPercent((projections.specificYieldKwhKwp / currentBenchmark.specificYield - 1) * 100, 1)}</span>
                     ) : (
-                      <span className="text-rose-400">-{( (1 - projections.specificYieldKwhKwp / currentBenchmark.specificYield) * 100).toFixed(1)}%</span>
+                      <span className="text-rose-400">-{formatPercent((1 - projections.specificYieldKwhKwp / currentBenchmark.specificYield) * 100, 1)}</span>
                     )}
                   </td>
                 </tr>
 
                 <tr>
                   <td className="py-2.5 px-4 font-sans text-white font-medium">Performance Ratio (PR)</td>
-                  <td className="py-2.5 px-4 text-amber-300 font-bold">{projections.performanceRatio}%</td>
-                  <td className="py-2.5 px-4 text-cyan-300">{currentBenchmark.pr}%</td>
+                  <td className="py-2.5 px-4 text-amber-300 font-bold">{formatPercent(projections.performanceRatio)}</td>
+                  <td className="py-2.5 px-4 text-cyan-300">{formatPercent(currentBenchmark.pr)}</td>
                   <td className="py-2.5 px-4">
-                    {(projections.performanceRatio - currentBenchmark.pr).toFixed(1)} pts
+                    {formatNumber(projections.performanceRatio - currentBenchmark.pr, 1)} pts
                   </td>
                 </tr>
 
                 <tr>
                   <td className="py-2.5 px-4 font-sans text-white font-medium">LCOE Estimado</td>
-                  <td className="py-2.5 px-4 text-amber-300 font-bold">${projections.lcoeUsdMwh} USD/MWh</td>
-                  <td className="py-2.5 px-4 text-cyan-300">${currentBenchmark.lcoe} USD/MWh</td>
+                  <td className="py-2.5 px-4 text-amber-300 font-bold">${formatNumber(projections.lcoeUsdMwh, 1)} USD/MWh</td>
+                  <td className="py-2.5 px-4 text-cyan-300">${formatNumber(currentBenchmark.lcoe, 1)} USD/MWh</td>
                   <td className="py-2.5 px-4">
                     {projections.lcoeUsdMwh <= currentBenchmark.lcoe ? (
-                      <span className="text-emerald-400">-{( (1 - projections.lcoeUsdMwh / currentBenchmark.lcoe) * 100).toFixed(1)}% (Más competitivo)</span>
+                      <span className="text-emerald-400">-{formatPercent((1 - projections.lcoeUsdMwh / currentBenchmark.lcoe) * 100, 1)} (Más competitivo)</span>
                     ) : (
-                      <span className="text-amber-400">+{((projections.lcoeUsdMwh / currentBenchmark.lcoe - 1) * 100).toFixed(1)}%</span>
+                      <span className="text-amber-400">+{formatPercent((projections.lcoeUsdMwh / currentBenchmark.lcoe - 1) * 100, 1)}</span>
                     )}
                   </td>
                 </tr>

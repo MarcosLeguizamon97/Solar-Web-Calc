@@ -2,6 +2,7 @@ import React from 'react';
 import { Bot, MapPin, ExternalLink, RefreshCw, AlertCircle, CheckCircle, Shield, Building2, Zap } from 'lucide-react';
 import { GeminiAnalysisState, LocationCoords, SolarSystemConfig } from '../types';
 import { WhatsAppIcon, formatReportForWhatsApp } from './TechnicalEnergyAnalysis';
+import { formatNumber, formatCoord, formatCapacityMw, normalizeReportNumbers } from '../utils/formatters';
 
 interface GeminiSolarReportProps {
   analysisState: GeminiAnalysisState;
@@ -20,25 +21,27 @@ export const GeminiSolarReport: React.FC<GeminiSolarReportProps> = ({
 
   const isTracker = config.technology === 'monocrystalline_tracking' || config.technology === 'bifacial_tracking';
   const haRatio = isTracker ? 1.6 : 1.4;
-  const currentRequiredHectares = (Math.round(config.systemCapacityMw * haRatio * 10) / 10).toFixed(1);
+  const currentRequiredHectares = formatNumber(Math.round(config.systemCapacityMw * haRatio * 10) / 10, 1);
+  const formattedCapacity = formatNumber(config.systemCapacityMw, Number.isInteger(config.systemCapacityMw) ? 0 : 1);
+  const formattedHaRatio = formatNumber(haRatio, 1);
 
   const processedReport = React.useMemo(() => {
     if (!report) return '';
     let text = report;
     text = text.replace(
       /([-*•]?\s*(?:\*\*)?(?:Superficie\s+requerida|Superficie\s+estimada|Superficie\s+de\s+terreno)(?:\*\*)?:?\s*).*?(?=(\n|$))/gi,
-      `- **Superficie requerida:** Para una planta de **${config.systemCapacityMw} MWp**, se estiman necesarias aproximadamente **${currentRequiredHectares} hectáreas** (ratio de diseño: ~${haRatio} ha/MWp para ${isTracker ? 'seguidores a 1 eje' : 'estructura fija'}).`
+      `- **Superficie requerida:** Para una planta de **${formattedCapacity} MWp**, se estiman necesarias aproximadamente **${currentRequiredHectares} hectáreas** (ratio de diseño: ~${formattedHaRatio} ha/MWp para ${isTracker ? 'seguidores a 1 eje' : 'estructura fija'}).`
     );
     text = text.replace(
-      /Para\s+una\s+planta\s+de\s+(?:\*\*)?[\d.]+\s*MWp(?:\*\*)?,?\s*se\s+estiman\s+necesarias?\s+aproximadamente\s+(?:\*\*)?[\d.]+\s*hect[aá]reas(?:\*\*)?.*?(?=(\n|\.|$))/gi,
-      `Para una planta de **${config.systemCapacityMw} MWp**, se estiman necesarias aproximadamente **${currentRequiredHectares} hectáreas** (ratio de diseño: ~${haRatio} ha/MWp para ${isTracker ? 'seguidores a 1 eje' : 'estructura fija'})`
+      /Para\s+una\s+planta\s+de\s+(?:\*\*)?[\d.,]+\s*MWp(?:\*\*)?,?\s*se\s+estiman\s+necesarias?\s+aproximadamente\s+(?:\*\*)?[\d.,]+\s*hect[aá]reas(?:\*\*)?.*?(?=(\n|\.|$))/gi,
+      `Para una planta de **${formattedCapacity} MWp**, se estiman necesarias aproximadamente **${currentRequiredHectares} hectáreas** (ratio de diseño: ~${formattedHaRatio} ha/MWp para ${isTracker ? 'seguidores a 1 eje' : 'estructura fija'})`
     );
     text = text.replace(
-      /La\s+planta\s+de\s+(?:\*\*)?[\d.]+\s*MWp(?:\*\*)?\s+requerir[aá]/gi,
-      `La planta de **${config.systemCapacityMw} MWp** requerirá`
+      /La\s+planta\s+de\s+(?:\*\*)?[\d.,]+\s*MWp(?:\*\*)?\s+requerir[aá]/gi,
+      `La planta de **${formattedCapacity} MWp** requerirá`
     );
-    return text;
-  }, [report, config.systemCapacityMw, currentRequiredHectares, haRatio, isTracker]);
+    return normalizeReportNumbers(text);
+  }, [report, config.systemCapacityMw, formattedCapacity, currentRequiredHectares, formattedHaRatio, isTracker]);
 
   const whatsAppShareUrl = React.useMemo(() => {
     if (!processedReport) return '';
@@ -99,7 +102,7 @@ export const GeminiSolarReport: React.FC<GeminiSolarReportProps> = ({
             Explorando geografía, rutas y red eléctrica en Google Maps...
           </div>
           <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Analizando las coordenadas ({location.lat.toFixed(4)}, {location.lng.toFixed(4)}) para una planta solar de {config.systemCapacityMw} MWp.
+            Analizando las coordenadas ({formatCoord(location.lat)}, {formatCoord(location.lng)}) para una planta solar de {formatCapacityMw(config.systemCapacityMw)}.
           </p>
         </div>
       )}
@@ -133,7 +136,7 @@ export const GeminiSolarReport: React.FC<GeminiSolarReportProps> = ({
             Auditoría de Terreno con Google Maps Pendiente
           </h4>
           <p className="text-xs text-slate-400 max-w-lg mx-auto">
-            Haz clic en el botón superior para realizar una evaluación profunda del emplazamiento en ({location.lat.toFixed(4)}, {location.lng.toFixed(4)}) utilizando Google Maps Grounding para verificar accesos viales para transformadores, relieve, proximidad a subestaciones y áreas protegidas.
+            Haz clic en el botón superior para realizar una evaluación profunda del emplazamiento en ({formatCoord(location.lat)}, {formatCoord(location.lng)}) utilizando Google Maps Grounding para verificar accesos viales para transformadores, relieve, proximidad a subestaciones y áreas protegidas.
           </p>
           <button
             onClick={onGenerateReport}
@@ -153,7 +156,7 @@ export const GeminiSolarReport: React.FC<GeminiSolarReportProps> = ({
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
               <span>
-                Auditoría generada para: <strong>{location.name || 'Emplazamiento'}</strong> ({location.lat.toFixed(4)}, {location.lng.toFixed(4)})
+                Auditoría generada para: <strong>{location.name || 'Emplazamiento'}</strong> ({formatCoord(location.lat)}, {formatCoord(location.lng)})
               </span>
             </div>
             <div className="flex items-center gap-2.5">

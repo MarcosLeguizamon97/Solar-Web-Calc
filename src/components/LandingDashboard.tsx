@@ -16,9 +16,11 @@ import {
   Sparkles,
   Sliders,
   Layers,
+  BarChart3,
 } from 'lucide-react';
 import { LocationCoords, EnergyProjections, SolarSystemConfig } from '../types';
 import { AppViewMode } from './MobileNavigation';
+import { formatNumber, formatCoord } from '../utils/formatters';
 
 interface LandingDashboardProps {
   location: LocationCoords;
@@ -99,7 +101,7 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
                   <span className="text-xs text-amber-300 font-bold ml-1">MWp</span>
                 </div>
                 <span className="text-[11px] text-slate-400 hidden sm:inline">
-                  ({Math.round(config.systemCapacityMw * 1000)} kWp DC • ~{(config.systemCapacityMw * 1.6).toFixed(1)} ha)
+                  ({formatNumber(Math.round(config.systemCapacityMw * 1000))} kWp DC • ~{formatNumber(config.systemCapacityMw * 1.6, 1)} ha)
                 </span>
               </div>
             </div>
@@ -285,6 +287,38 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
               <span className="text-slate-500 text-[11px]">Google Maps + IEC 61724</span>
             </div>
           </button>
+
+          {/* Card 5: Gráficos de Simulación y Curva Solar 24h */}
+          <button
+            onClick={() => onNavigate('charts' as AppViewMode)}
+            className="group min-h-[120px] p-5 sm:p-6 bg-gradient-to-br from-slate-900/95 via-slate-900 to-slate-950 border border-slate-800 hover:border-emerald-500/60 rounded-3xl shadow-xl hover:shadow-2xl hover:shadow-emerald-500/10 transition-all text-left flex flex-col justify-between cursor-pointer relative overflow-hidden sm:col-span-2 lg:col-span-1"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <div className="p-2 rounded-xl bg-slate-800/60 text-slate-400 group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-colors">
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-1">
+              <h3 className="text-base sm:text-lg font-black text-white group-hover:text-emerald-400 transition-colors">
+                5. Gráficos de Simulación & Curva 24h
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Gráficos individuales por métrica (GHI, DNI, Temperatura, etc.) con escala automática, cuadrícula de puntos y selector interactivo.
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+              <span className="text-emerald-400 font-bold flex items-center gap-1">
+                Abrir Gráficos Detallados
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-slate-500 text-[11px]">Curvas 24h & Mensual</span>
+            </div>
+          </button>
         </div>
       </section>
 
@@ -296,7 +330,7 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
             <span>Resumen del Emplazamiento Activo: {location.name}</span>
           </div>
           <span className="text-[11px] text-slate-400 font-mono">
-            {location.lat.toFixed(3)}°, {location.lng.toFixed(3)}°
+            {formatCoord(location.lat, 3)}°, {formatCoord(location.lng, 3)}°
           </span>
         </div>
 
@@ -304,7 +338,7 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
           <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
             <div className="text-[11px] text-slate-400 font-medium">Recurso Solar (GHI)</div>
             <div className="text-lg sm:text-xl font-black text-amber-400 mt-1">
-              {projections.annualGhiKwhM2.toLocaleString()}
+              {formatNumber(projections.annualGhiKwhM2)}
               <span className="text-xs text-amber-300/80 font-normal ml-1">kWh/m²</span>
             </div>
           </div>
@@ -312,7 +346,7 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
           <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
             <div className="text-[11px] text-slate-400 font-medium">Generación Proyectada</div>
             <div className="text-lg sm:text-xl font-black text-emerald-400 mt-1">
-              {projections.annualGenerationMwh.toLocaleString()}
+              {formatNumber(projections.annualGenerationMwh)}
               <span className="text-xs text-emerald-300/80 font-normal ml-1">MWh/año</span>
             </div>
           </div>
@@ -320,7 +354,7 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
           <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
             <div className="text-[11px] text-slate-400 font-medium">Inclinación Óptima</div>
             <div className="text-lg sm:text-xl font-black text-cyan-400 mt-1">
-              {config.tiltAngleDegrees}°
+              {formatNumber(config.tiltAngleDegrees)}°
               <span className="text-xs text-cyan-300/80 font-normal ml-1">Norte</span>
             </div>
           </div>
@@ -328,7 +362,7 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
           <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
             <div className="text-[11px] text-slate-400 font-medium">Ahorro / Ingreso Estimado</div>
             <div className="text-lg sm:text-xl font-black text-amber-400 mt-1">
-              ${projections.annualRevenueUsd.toLocaleString()}
+              ${formatNumber(projections.annualRevenueUsd)}
               <span className="text-xs text-amber-300/80 font-normal ml-1">USD/año</span>
             </div>
           </div>

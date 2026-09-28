@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { BarChart3, TrendingUp, Activity, PieChart, DollarSign, Zap } from 'lucide-react';
+import { BarChart3, TrendingUp, Activity, PieChart, DollarSign, Zap, Sun, Flame, Cloud, Thermometer, Wind } from 'lucide-react';
 import { EnergyProjections, HourlyForecast } from '../types';
+import { formatNumber, formatPercent } from '../utils/formatters';
 
 interface SolarChartsProps {
   hourly: HourlyForecast;
@@ -10,6 +11,14 @@ interface SolarChartsProps {
 
 type ChartTab = 'hourly' | 'monthly' | 'losses' | 'financial';
 
+const metricConfig = {
+  ghi: { label: 'GHI (Irradiance Global Horizontal)', unit: 'W/m²', color: '#f59e0b', gradientId: 'ghiGrad' },
+  dni: { label: 'DNI (Haz Directo Normal)', unit: 'W/m²', color: '#facc15', gradientId: 'dniGrad' },
+  dhi: { label: 'DHI (Radiación Difusa)', unit: 'W/m²', color: '#38bdf8', gradientId: 'dhiGrad' },
+  temperature: { label: 'Temperatura Ambiente', unit: '°C', color: '#fb7185', gradientId: 'tempGrad' },
+  cloudCover: { label: 'Nubosidad del Cielo', unit: '%', color: '#818cf8', gradientId: 'cloudGrad' },
+};
+
 export const SolarCharts: React.FC<SolarChartsProps> = ({
   hourly,
   projections,
@@ -17,16 +26,21 @@ export const SolarCharts: React.FC<SolarChartsProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<ChartTab>('monthly');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [activeHourlyMetric, setActiveHourlyMetric] = useState<keyof typeof metricConfig>('ghi');
 
   // Hourly curve data
   const hourlyCount = Math.min(24, hourly.time?.length || 0);
-  const maxGhi = Math.max(100, ...(hourly.ghi || []).slice(0, 24));
-  const maxDni = Math.max(100, ...(hourly.dni || []).slice(0, 24));
-  const maxRadiation = Math.max(maxGhi, maxDni, 800);
+  const currentMetricValues = (hourly[activeHourlyMetric] || []).slice(0, 24);
+  const rawMin = currentMetricValues.length > 0 ? Math.min(...currentMetricValues) : 0;
+  const rawMax = currentMetricValues.length > 0 ? Math.max(...currentMetricValues) : 100;
+  const padding = (rawMax - rawMin) * 0.15 || 5;
+  const minVal = activeHourlyMetric === 'temperature' ? Math.floor(rawMin - padding) : Math.max(0, Math.floor(rawMin - padding));
+  const maxVal = Math.ceil(rawMax + padding);
 
   // Monthly data
   const monthlyData = projections.monthlyGenerationMwh || [];
   const maxMonthlyGen = Math.max(1, ...monthlyData.map((m) => m.generationMwh));
+  const currentCfg = metricConfig[activeHourlyMetric];
 
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl backdrop-blur-sm space-y-5">
@@ -100,7 +114,7 @@ export const SolarCharts: React.FC<SolarChartsProps> = ({
           <div className="flex items-center justify-between text-xs text-slate-400 px-1">
             <span>Producción Mensual Estimada en MWh (Inyección Neta a Red)</span>
             <span className="font-semibold text-amber-400">
-              Total Anual: {projections.annualGenerationMwh.toLocaleString()} MWh/año
+              Total Anual: {formatNumber(projections.annualGenerationMwh)} MWh/año
             </span>
           </div>
 
@@ -120,8 +134,8 @@ export const SolarCharts: React.FC<SolarChartsProps> = ({
                   {isHovered && (
                     <div className="absolute -top-16 bg-slate-900 border border-amber-500/50 text-white text-[11px] p-2 rounded-lg shadow-2xl z-20 whitespace-nowrap pointer-events-none">
                       <div className="font-bold text-amber-400">{item.month}</div>
-                      <div>Generación: {item.generationMwh.toLocaleString()} MWh</div>
-                      <div className="text-slate-400">Radiación: {item.ghiKwhM2} kWh/m²</div>
+                      <div>Generación: {formatNumber(item.generationMwh)} MWh</div>
+                      <div className="text-slate-400">Radiación: {formatNumber(item.ghiKwhM2)} kWh/m²</div>
                     </div>
                   )}
 
@@ -136,8 +150,8 @@ export const SolarCharts: React.FC<SolarChartsProps> = ({
                   >
                     <div className="text-[10px] text-slate-950 font-bold text-center mt-1 hidden sm:block truncate px-0.5">
                       {item.generationMwh >= 1000
-                        ? `${(item.generationMwh / 1000).toFixed(1)}k`
-                        : item.generationMwh}
+                        ? `${formatNumber(item.generationMwh / 1000, 1)}k`
+                        : formatNumber(item.generationMwh)}
                     </div>
                   </div>
 
@@ -154,170 +168,203 @@ export const SolarCharts: React.FC<SolarChartsProps> = ({
             <div>
               <span className="text-slate-400">Rendimiento Específico:</span>
               <div className="text-white font-bold text-sm">
-                {projections.specificYieldKwhKwp.toLocaleString()} kWh/kWp
+                {formatNumber(projections.specificYieldKwhKwp)} kWh/kWp
               </div>
             </div>
             <div>
               <span className="text-slate-400">Factor de Capacidad:</span>
               <div className="text-emerald-400 font-bold text-sm">
-                {projections.capacityFactorPercent}%
+                {formatPercent(projections.capacityFactorPercent)}
               </div>
             </div>
             <div>
               <span className="text-slate-400">Hogares Abastecidos:</span>
               <div className="text-amber-400 font-bold text-sm">
-                ~{projections.homesPowered.toLocaleString()} hogares
+                ~{formatNumber(projections.homesPowered)} hogares
               </div>
             </div>
             <div>
               <span className="text-slate-400">CO₂ Evitado Anual:</span>
               <div className="text-teal-400 font-bold text-sm">
-                {projections.avoidedCo2TonsYear.toLocaleString()} ton CO₂
+                {formatNumber(projections.avoidedCo2TonsYear)} ton CO₂
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Tab 2: Hourly Solar Curve SVG */}
+      {/* Tab 2: Hourly Solar Curve (Individual Metric Charts with Dotted Grid & Auto-Scaling) */}
       {activeTab === 'hourly' && (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between text-xs text-slate-400 px-1 gap-2">
-            <span>Perfil Horario de Radiación y Temperatura (Próximas 24 Horas)</span>
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-amber-400 font-semibold">
-                <span className="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
-                GHI (W/m²)
-              </span>
-              <span className="flex items-center gap-1.5 text-yellow-300 font-semibold">
-                <span className="w-3 h-3 rounded-full bg-yellow-300 inline-block"></span>
-                DNI Haz Directo (W/m²)
-              </span>
-              <span className="flex items-center gap-1.5 text-cyan-400 font-semibold">
-                <span className="w-3 h-1 bg-cyan-400 inline-block"></span>
-                Temp (°C)
-              </span>
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+            <div>
+              <h4 className="font-bold text-white text-sm">Simulación de Curva Horaria 24h (Gráficos Independientes)</h4>
+              <p className="text-xs text-slate-400">Seleccioná una métrica para consultar su gráfico individual detallado con escala automática y cuadrícula de puntos</p>
             </div>
           </div>
 
-          <div className="h-64 w-full bg-slate-950/60 rounded-xl border border-slate-800 p-3 relative overflow-hidden flex items-center justify-center">
-            {hourlyCount > 0 ? (
-              <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 240">
-                <defs>
-                  <linearGradient id="ghiGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.45" />
-                    <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
-                  </linearGradient>
-                  <linearGradient id="dniGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#facc15" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#facc15" stopOpacity="0.0" />
-                  </linearGradient>
-                </defs>
+          {/* Metric Selector Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {(Object.keys(metricConfig) as Array<keyof typeof metricConfig>).map((key) => {
+              const cfg = metricConfig[key];
+              const isActive = activeHourlyMetric === key;
+              const values = (hourly[key as keyof HourlyForecast] as number[]) || [];
+              const peakVal = values.length > 0 ? Math.max(...values) : 0;
 
-                {/* Grid horizontal lines */}
-                {[0.25, 0.5, 0.75, 1.0].map((ratio) => (
-                  <line
-                    key={ratio}
-                    x1="40"
-                    y1={200 - ratio * 160}
-                    x2="980"
-                    y2={200 - ratio * 160}
-                    stroke="#334155"
-                    strokeDasharray="4 4"
-                    strokeWidth="1"
-                  />
-                ))}
+              return (
+                <button
+                  key={key}
+                  onClick={() => setActiveHourlyMetric(key)}
+                  className={`p-2 sm:p-2.5 rounded-xl border text-left transition flex flex-col justify-between gap-1 cursor-pointer ${
+                    isActive
+                      ? 'bg-amber-500/15 border-amber-500/60 shadow-lg shadow-amber-500/10 text-white'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wide truncate">{cfg.label.split(' ')[0]}</span>
+                    <div
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: cfg.color }}
+                    ></div>
+                  </div>
+                  <div>
+                    <div className="text-sm sm:text-base font-black" style={{ color: isActive ? cfg.color : '#e2e8f0' }}>
+                      {formatNumber(peakVal, peakVal < 10 ? 1 : 0)} <span className="text-[10px] font-normal text-slate-400">{cfg.unit}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500">Máximo diario</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
-                {/* GHI Area and Path */}
-                {(() => {
-                  const points = (hourly.ghi || []).slice(0, 24).map((val, i) => {
-                    const x = 50 + (i / 23) * 910;
-                    const y = 200 - (val / maxRadiation) * 160;
-                    return { x, y, val };
-                  });
+          {/* Expanded Individual Chart Container */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs text-slate-300 px-1 font-semibold">
+              <span className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: currentCfg.color }}></span>
+                {currentCfg.label} ({currentCfg.unit})
+              </span>
+            </div>
 
-                  if (points.length < 2) return null;
-                  const pathD = `M ${points[0].x} ${points[0].y} ` + points.slice(1).map((p) => `L ${p.x} ${p.y}`).join(' ');
-                  const areaD = `${pathD} L ${points[points.length - 1].x} 200 L ${points[0].x} 200 Z`;
+            <div className="h-[380px] sm:h-[450px] w-full bg-slate-950/90 rounded-3xl border border-slate-800/90 p-4 sm:p-6 relative overflow-hidden shadow-2xl flex flex-col justify-between">
+              {hourlyCount > 0 ? (
+                <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 300">
+                  <defs>
+                    <linearGradient id={currentCfg.gradientId} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={currentCfg.color} stopOpacity="0.5" />
+                      <stop offset="100%" stopColor={currentCfg.color} stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
 
-                  return (
-                    <>
-                      <path d={areaD} fill="url(#ghiGradient)" />
-                      <path d={pathD} fill="none" stroke="#f59e0b" strokeWidth="2.5" />
-                    </>
-                  );
-                })()}
+                  {/* Dotted Grid Background */}
+                  {[0, 0.25, 0.5, 0.75, 1.0].map((ratio, idx) => {
+                    const y = 30 + ratio * 220;
+                    const valAtRatio = Math.round(maxVal - ratio * (maxVal - minVal));
+                    return (
+                      <g key={idx}>
+                        <line
+                          x1="60"
+                          y1={y}
+                          x2="960"
+                          y2={y}
+                          stroke="#334155"
+                          strokeDasharray="3 3"
+                          strokeWidth="1"
+                          opacity="0.6"
+                        />
+                        <text
+                          x="50"
+                          y={y + 4}
+                          fill="#64748b"
+                          fontSize="10"
+                          textAnchor="end"
+                          fontFamily="monospace"
+                        >
+                          {valAtRatio}
+                        </text>
+                      </g>
+                    );
+                  })}
 
-                {/* DNI Path */}
-                {(() => {
-                  const points = (hourly.dni || []).slice(0, 24).map((val, i) => {
-                    const x = 50 + (i / 23) * 910;
-                    const y = 200 - (val / maxRadiation) * 160;
-                    return { x, y, val };
-                  });
+                  {/* Vertical grid lines */}
+                  {Array.from({ length: 9 }).map((_, i) => {
+                    const x = 60 + (i / 8) * 900;
+                    return (
+                      <line
+                        key={i}
+                        x1={x}
+                        y1="30"
+                        x2={x}
+                        y2="250"
+                        stroke="#1e293b"
+                        strokeDasharray="2 4"
+                        strokeWidth="1"
+                      />
+                    );
+                  })}
 
-                  if (points.length < 2) return null;
-                  const pathD = `M ${points[0].x} ${points[0].y} ` + points.slice(1).map((p) => `L ${p.x} ${p.y}`).join(' ');
+                  {/* Curve Path & Area */}
+                  {(() => {
+                    const rawValues = (hourly[activeHourlyMetric] as number[]).slice(0, 24);
+                    const range = maxVal - minVal || 1;
+                    const points = rawValues.map((val, i) => {
+                      const x = 60 + (i / 23) * 900;
+                      const y = 250 - ((val - minVal) / range) * 220;
+                      return { x, y, val };
+                    });
 
-                  return (
-                    <path
-                      d={pathD}
-                      fill="none"
-                      stroke="#facc15"
-                      strokeWidth="2"
-                      strokeDasharray="5 3"
-                    />
-                  );
-                })()}
+                    if (points.length < 2) return null;
+                    const pathD = `M ${points[0].x} ${points[0].y} ` + points.slice(1).map((p) => `L ${p.x} ${p.y}`).join(' ');
+                    const areaD = `${pathD} L ${points[points.length - 1].x} 250 L ${points[0].x} 250 Z`;
 
-                {/* Temperature Line */}
-                {(() => {
-                  const temps = (hourly.temperature || []).slice(0, 24);
-                  const minT = Math.min(...temps, 10);
-                  const maxT = Math.max(...temps, 35);
-                  const deltaT = Math.max(10, maxT - minT);
+                    return (
+                      <>
+                        <path d={areaD} fill={`url(#${currentCfg.gradientId})`} />
+                        <path d={pathD} fill="none" stroke={currentCfg.color} strokeWidth="3.5" strokeLinecap="round" />
+                        {points.map((p, idx) => (
+                          <g key={idx}>
+                            <circle
+                              cx={p.x}
+                              cy={p.y}
+                              r="4.5"
+                              fill="#0f172a"
+                              stroke={currentCfg.color}
+                              strokeWidth="2.5"
+                            />
+                          </g>
+                        ))}
+                      </>
+                    );
+                  })()}
 
-                  const points = temps.map((t, i) => {
-                    const x = 50 + (i / 23) * 910;
-                    const y = 190 - ((t - minT) / deltaT) * 100;
-                    return { x, y, t };
-                  });
-
-                  const pathD = `M ${points[0].x} ${points[0].y} ` + points.slice(1).map((p) => `L ${p.x} ${p.y}`).join(' ');
-
-                  return (
-                    <path
-                      d={pathD}
-                      fill="none"
-                      stroke="#38bdf8"
-                      strokeWidth="1.5"
-                      opacity="0.8"
-                    />
-                  );
-                })()}
-
-                {/* Hour Labels on X-axis */}
-                {(hourly.time || []).slice(0, 24).map((tStr, i) => {
-                  if (i % 3 !== 0 && i !== 23) return null;
-                  const x = 50 + (i / 23) * 910;
-                  const timeLabel = tStr.split('T')[1]?.slice(0, 5) || `${i}:00`;
-                  return (
-                    <text
-                      key={i}
-                      x={x}
-                      y={225}
-                      fill="#94a3b8"
-                      fontSize="11"
-                      textAnchor="middle"
-                    >
-                      {timeLabel}
-                    </text>
-                  );
-                })}
-              </svg>
-            ) : (
-              <div className="text-slate-400 text-xs">Cargando serie horaria...</div>
-            )}
+                  {/* X-Axis Time Labels (00:00 to 23:59) */}
+                  {(hourly.time || []).slice(0, 24).map((tStr, i) => {
+                    if (i % 3 !== 0 && i !== 23) return null;
+                    const x = 60 + (i / 23) * 900;
+                    let timeLabel = tStr.split('T')[1]?.slice(0, 5) || `${i < 10 ? '0' + i : i}:00`;
+                    if (i === 0) timeLabel = '00:00';
+                    if (i === 23) timeLabel = '23:59';
+                    return (
+                      <text
+                        key={i}
+                        x={x}
+                        y={275}
+                        fill="#94a3b8"
+                        fontSize="11"
+                        textAnchor="middle"
+                        fontFamily="monospace"
+                      >
+                        {timeLabel}
+                      </text>
+                    );
+                  })}
+                </svg>
+              ) : (
+                <div className="text-slate-400 text-xs text-center py-16">Cargando serie horaria...</div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -353,7 +400,7 @@ export const SolarCharts: React.FC<SolarChartsProps> = ({
           <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl text-xs text-emerald-200 flex items-center gap-2">
             <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
-              Un <strong>Performance Ratio de {projections.performanceRatio}%</strong> es considerado{' '}
+              Un <strong>Performance Ratio de {formatPercent(projections.performanceRatio)}</strong> es considerado{' '}
               {projections.performanceRatio >= 81 ? 'óptimo para plantas solares de escala comercial' : 'estándar para este emplazamiento climático'}.
             </span>
           </div>
@@ -367,25 +414,25 @@ export const SolarCharts: React.FC<SolarChartsProps> = ({
             <div>
               <span className="text-slate-400">Inversión Estimada (CAPEX):</span>
               <div className="text-white font-extrabold text-base">
-                ${(projections.capexTotalUsd / 1_000_000).toFixed(2)}M USD
+                ${formatNumber(projections.capexTotalUsd / 1_000_000, 2)}M USD
               </div>
             </div>
             <div>
               <span className="text-slate-400">Ingreso Anual Bruto:</span>
               <div className="text-emerald-400 font-extrabold text-base">
-                ${(projections.annualRevenueUsd / 1_000).toFixed(0)}k USD/año
+                ${formatNumber(Math.round(projections.annualRevenueUsd / 1000))}k USD/año
               </div>
             </div>
             <div>
               <span className="text-slate-400">Período de Retorno (Payback):</span>
               <div className="text-amber-400 font-extrabold text-base">
-                {projections.simplePaybackYears} Años
+                {formatNumber(projections.simplePaybackYears, 1)} Años
               </div>
             </div>
             <div>
               <span className="text-slate-400">Costo Nivelado (LCOE):</span>
               <div className="text-teal-400 font-extrabold text-base">
-                ${projections.lcoeUsdMwh} USD/MWh
+                ${formatNumber(projections.lcoeUsdMwh, 1)} USD/MWh
               </div>
             </div>
           </div>

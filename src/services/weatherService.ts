@@ -263,9 +263,10 @@ export async function fetchSolarWeatherData(lat: number, lng: number): Promise<{
     sunAzimuth: sun.azimuth,
   };
 
-  // Next 24 hours
-  const nowHour = new Date().getHours();
-  const sliceStart = Math.max(0, nowHour - 2);
+  // Full 24 hours of current day (00:00 to 23:59)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const startIdx = (h.time || []).findIndex((t: string) => t.startsWith(todayStr));
+  const sliceStart = startIdx >= 0 ? startIdx : 0;
   const sliceEnd = sliceStart + 24;
 
   const hourly: HourlyForecast = {

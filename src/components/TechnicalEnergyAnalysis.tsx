@@ -33,6 +33,7 @@ import {
 } from '../types';
 import { MetricHelpTooltip } from './MetricHelpTooltip';
 import { MetricExplanationModal } from './MetricExplanationModal';
+import { formatNumber, formatPercent, formatCurrency, formatCoord, normalizeReportNumbers } from '../utils/formatters';
 
 interface TechnicalEnergyAnalysisProps {
   location: LocationCoords;
@@ -64,7 +65,7 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
   // Dynamic surface calculation based on active plant capacity state
   const isTracker = config.technology === 'monocrystalline_tracking' || config.technology === 'bifacial_tracking';
   const haRatio = isTracker ? 1.6 : 1.4;
-  const currentRequiredHectares = (Math.round(config.systemCapacityMw * haRatio * 10) / 10).toFixed(1);
+  const currentRequiredHectares = formatNumber(Math.round(config.systemCapacityMw * haRatio * 10) / 10, 1);
 
   // Synchronize and dynamically replace any static capacity/hectares in the report text
   const processedReport = useMemo(() => {
@@ -136,7 +137,7 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
               </div>
               <div className="h-4 w-[1px] bg-slate-800"></div>
               <div className="px-2 font-mono font-bold text-amber-400 flex items-center gap-1.5">
-                <span>{config.systemCapacityMw} MWp</span>
+                <span>{formatNumber(config.systemCapacityMw, 1)} MWp</span>
                 <span className="text-slate-600 font-normal">|</span>
                 <span className="text-emerald-400 font-medium">~{currentRequiredHectares} ha</span>
               </div>
@@ -243,7 +244,7 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                       className="w-20 px-2.5 py-1 bg-slate-900 border border-amber-500/40 rounded-lg text-amber-400 font-mono font-bold text-right text-xs focus:outline-none focus:ring-1 focus:ring-amber-400"
                     />
                     <span className="text-amber-400 font-bold text-xs">MWp</span>
-                    <span className="text-slate-500 text-[11px] font-mono">({Math.round(config.systemCapacityMw * 1000)} kWp)</span>
+                    <span className="text-slate-500 text-[11px] font-mono">({formatNumber(Math.round(config.systemCapacityMw * 1000))} kWp)</span>
                   </div>
                 </div>
 
@@ -288,7 +289,7 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                           : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
                       }`}
                     >
-                      {presetMw} MWp
+                      {formatNumber(presetMw, Number.isInteger(presetMw) ? 0 : 1)} MWp
                     </button>
                   );
                 })}
@@ -300,11 +301,11 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
               <div className="flex items-center gap-1.5">
                 <span className="text-amber-400 font-bold">Cálculo matemático:</span>
                 <span>
-                  Para una planta de <strong className="text-amber-300 font-bold font-mono">{config.systemCapacityMw} MWp</strong> se estiman necesarias aproximadamente <strong className="text-emerald-300 font-bold font-mono">{currentRequiredHectares} hectáreas</strong>.
+                  Para una planta de <strong className="text-amber-300 font-bold font-mono">{formatNumber(config.systemCapacityMw, 1)} MWp</strong> se estiman necesarias aproximadamente <strong className="text-emerald-300 font-bold font-mono">{currentRequiredHectares} hectáreas</strong>.
                 </span>
               </div>
               <span className="text-slate-400 font-mono text-[10px]">
-                Ratio: ~{haRatio} ha/MWp ({isTracker ? 'seguidores a 1 eje' : 'estructura fija'})
+                Ratio: ~{formatNumber(haRatio, 1)} ha/MWp ({isTracker ? 'seguidores a 1 eje' : 'estructura fija'})
               </span>
             </div>
           </div>
@@ -320,7 +321,7 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                   Consultando infraestructura real en Google Maps...
                 </h4>
                 <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                  Analizando accesos terrestres, corredores de transporte de energía y orografía para una planta de {config.systemCapacityMw} MWp ({currentRequiredHectares} ha) en las coordenadas [{location.lat.toFixed(4)}, {location.lng.toFixed(4)}].
+                  Analizando accesos terrestres, corredores de transporte de energía y orografía para una planta de {formatNumber(config.systemCapacityMw, 1)} MWp ({currentRequiredHectares} ha) en las coordenadas [{formatCoord(location.lat)}, {formatCoord(location.lng)}].
                 </p>
               </div>
             </div>
@@ -507,7 +508,7 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-emerald-400">
-                    {projections.performanceRatio}%
+                    {formatPercent(projections.performanceRatio)}
                   </span>
                   <span className="text-xs text-emerald-300/80 font-bold">eficiencia global</span>
                 </div>
@@ -528,18 +529,18 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                   <MetricHelpTooltip
                     metricId="specific_yield"
                     metricTitle="Specific Yield (Rendimiento Específico)"
-                    currentValue={`${projections.specificYieldKwhKwp} kWh/kWp/año`}
+                    currentValue={`${formatNumber(projections.specificYieldKwhKwp)} kWh/kWp/año`}
                     onOpenFullModal={() =>
                       setActiveMetricModal({
                         id: 'specific_yield',
-                        value: `${projections.specificYieldKwhKwp} kWh/kWp`,
+                        value: `${formatNumber(projections.specificYieldKwhKwp)} kWh/kWp`,
                       })
                     }
                   />
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-amber-400">
-                    {projections.specificYieldKwhKwp.toLocaleString()}
+                    {formatNumber(projections.specificYieldKwhKwp)}
                   </span>
                   <span className="text-xs text-amber-300/80 font-bold">kWh/kWp/año</span>
                 </div>
@@ -560,24 +561,24 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                   <MetricHelpTooltip
                     metricId="capacity_factor"
                     metricTitle="Factor de Capacidad (CF)"
-                    currentValue={`${projections.capacityFactorPercent}%`}
+                    currentValue={formatPercent(projections.capacityFactorPercent)}
                     onOpenFullModal={() =>
                       setActiveMetricModal({
                         id: 'capacity_factor',
-                        value: `${projections.capacityFactorPercent}%`,
+                        value: formatPercent(projections.capacityFactorPercent),
                       })
                     }
                   />
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-cyan-400">
-                    {projections.capacityFactorPercent}%
+                    {formatPercent(projections.capacityFactorPercent)}
                   </span>
                   <span className="text-xs text-cyan-300/80 font-bold">anual</span>
                 </div>
               </div>
               <div className="mt-2 text-[11px] text-slate-400">
-                Utilización real de la planta sobre 8.760 horas al año.
+                Utilización real de la planta sobre 8760 horas al año.
               </div>
             </div>
 
@@ -590,12 +591,12 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                     Pérdida Térmica
                   </span>
                   <span className="text-[10px] text-rose-400 font-mono font-bold bg-rose-500/10 px-1.5 py-0.5 rounded">
-                    T_celda {projections.averageCellTempC}°C
+                    T_celda {formatNumber(projections.averageCellTempC, 1)}°C
                   </span>
                 </div>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-black text-rose-400">
-                    -{projections.tempLossPercent}%
+                    -{formatPercent(projections.tempLossPercent)}
                   </span>
                   <span className="text-xs text-rose-300/80 font-bold">por calor</span>
                 </div>
@@ -614,7 +615,7 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                 Desglose Cascada de Eficiencia (De Radiación Incidente a Inyección Neta)
               </span>
               <span className="text-emerald-400 font-mono font-bold">
-                PR Final: {projections.performanceRatio}%
+                PR Final: {formatPercent(projections.performanceRatio)}
               </span>
             </div>
 
@@ -648,10 +649,10 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                             : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                         }`}
                       >
-                        {isZero ? 'Base 100%' : isGain ? `+${Math.abs(step.lossPercent)}%` : `-${step.lossPercent}%`}
+                        {isZero ? 'Base 100%' : isGain ? `+${formatPercent(Math.abs(step.lossPercent))}` : `-${formatPercent(step.lossPercent)}`}
                       </span>
                       <span className="text-slate-400 font-mono text-xs w-28 text-right">
-                        {step.valueKwhM2OrMwh.toLocaleString()} {step.category === 'irradiance' ? 'kWh/m²' : 'MWh/año'}
+                        {formatNumber(step.valueKwhM2OrMwh)} {step.category === 'irradiance' ? 'kWh/m²' : 'MWh/año'}
                       </span>
                     </div>
                   </div>
@@ -749,7 +750,7 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
               <div className="flex flex-wrap items-center justify-between text-xs text-slate-400 px-1 gap-2">
                 <span>Inyección Neta Estimada a Red en Megavatios-Hora (MWh/mes)</span>
                 <span className="font-extrabold text-amber-400 text-sm">
-                  Total Anual: {projections.annualGenerationMwh.toLocaleString()} MWh/año
+                  Total Anual: {formatNumber(projections.annualGenerationMwh)} MWh/año
                 </span>
               </div>
 
@@ -770,8 +771,8 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                       {isHovered && (
                         <div className="absolute -top-16 bg-slate-900 border border-amber-500/50 text-white text-[11px] p-2.5 rounded-xl shadow-2xl z-20 whitespace-nowrap pointer-events-none">
                           <div className="font-bold text-amber-400">{item.month}</div>
-                          <div>Generación: <strong className="text-white">{item.generationMwh.toLocaleString()} MWh</strong></div>
-                          <div className="text-slate-400">Radiación: {item.ghiKwhM2} kWh/m²</div>
+                          <div>Generación: <strong className="text-white">{formatNumber(item.generationMwh)} MWh</strong></div>
+                          <div className="text-slate-400">Radiación: {formatNumber(item.ghiKwhM2)} kWh/m²</div>
                         </div>
                       )}
 
@@ -786,8 +787,8 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                       >
                         <div className="text-[10px] text-slate-950 font-black text-center mt-1 hidden sm:block truncate px-0.5">
                           {item.generationMwh >= 1000
-                            ? `${(item.generationMwh / 1000).toFixed(1)}k`
-                            : item.generationMwh}
+                            ? `${formatNumber(item.generationMwh / 1000, 1)}k`
+                            : formatNumber(item.generationMwh)}
                         </div>
                       </div>
 
@@ -805,25 +806,25 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                 <div>
                   <span className="text-slate-400">Producción Anual Neta:</span>
                   <div className="text-white font-extrabold text-base mt-0.5">
-                    {projections.annualGenerationMwh.toLocaleString()} MWh
+                    {formatNumber(projections.annualGenerationMwh)} MWh
                   </div>
                 </div>
                 <div>
                   <span className="text-slate-400">Ingreso/Ahorro Anual:</span>
                   <div className="text-emerald-400 font-extrabold text-base mt-0.5">
-                    ${projections.annualRevenueUsd.toLocaleString()} USD
+                    ${formatNumber(projections.annualRevenueUsd)} USD
                   </div>
                 </div>
                 <div>
                   <span className="text-slate-400">Hogares Abastecidos:</span>
                   <div className="text-amber-400 font-extrabold text-base mt-0.5">
-                    ~{projections.homesPowered.toLocaleString()} hogares
+                    ~{formatNumber(projections.homesPowered)} hogares
                   </div>
                 </div>
                 <div>
                   <span className="text-slate-400">CO₂ Evitado Anual:</span>
                   <div className="text-cyan-400 font-extrabold text-base mt-0.5">
-                    {projections.avoidedCo2TonsYear.toLocaleString()} ton
+                    {formatNumber(projections.avoidedCo2TonsYear)} ton
                   </div>
                 </div>
               </div>
@@ -944,10 +945,10 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                 <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-2xl space-y-1.5">
                   <span className="text-slate-400 font-medium">Paneles Fotovoltaicos:</span>
                   <div className="text-xl font-black text-amber-400">
-                    {projections.moduleCount.toLocaleString()} paneles
+                    {formatNumber(projections.moduleCount)} paneles
                   </div>
                   <p className="text-[11px] text-slate-500 leading-snug">
-                    Módulos bifaciales de {config.moduleWattageWp || 585} Wp (Eficiencia: {config.panelEfficiencyPercent}%).
+                    Módulos bifaciales de {formatNumber(config.moduleWattageWp || 585)} Wp (Eficiencia: {formatPercent(config.panelEfficiencyPercent)}).
                   </p>
                 </div>
 
@@ -955,10 +956,10 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                 <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-2xl space-y-1.5">
                   <span className="text-slate-400 font-medium">Capacidad de Inversores:</span>
                   <div className="text-xl font-black text-cyan-400">
-                    {projections.inverterCount} unidades ({projections.acCapacityKw} kWac)
+                    {formatNumber(projections.inverterCount)} unidades ({formatNumber(projections.acCapacityKw)} kWac)
                   </div>
                   <p className="text-[11px] text-slate-500 leading-snug">
-                    Relación DC/AC (ILR): {projections.dcAcRatio}x (Eficiencia de conversión: {config.inverterEfficiencyPercent}%).
+                    Relación DC/AC (ILR): {formatNumber(projections.dcAcRatio, 2)}x (Eficiencia de conversión: {formatPercent(config.inverterEfficiencyPercent)}).
                   </p>
                 </div>
 
@@ -966,10 +967,10 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
                 <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-2xl space-y-1.5">
                   <span className="text-slate-400 font-medium">Generación a 25 Años:</span>
                   <div className="text-xl font-black text-emerald-400">
-                    {projections.lifetimeGenerationMwh.toLocaleString()} MWh
+                    {formatNumber(projections.lifetimeGenerationMwh)} MWh
                   </div>
                   <p className="text-[11px] text-slate-500 leading-snug">
-                    Simulación con degradación acumulada de {config.annualDegradationPercent || 0.45}% anual.
+                    Simulación con degradación acumulada de {formatPercent(config.annualDegradationPercent || 0.45, 2)} anual.
                   </p>
                 </div>
               </div>
@@ -998,7 +999,9 @@ function getReactiveReportContent(
   isTracker: boolean
 ): string {
   const haRatio = isTracker ? 1.6 : 1.4;
-  const hectares = (Math.round(capacityMw * haRatio * 10) / 10).toFixed(1);
+  const hectares = formatNumber(Math.round(capacityMw * haRatio * 10) / 10, 1);
+  const formattedCapacity = formatNumber(capacityMw, Number.isInteger(capacityMw) ? 0 : 1);
+  const formattedHaRatio = formatNumber(haRatio, 1);
   const techLabel = isTracker ? 'seguidores a 1 eje' : 'estructura fija';
 
   let text = rawText;
@@ -1006,32 +1009,35 @@ function getReactiveReportContent(
   // 1. Target any line/bullet mentioning "Superficie requerida", "Superficie estimada", or "Superficie de terreno"
   text = text.replace(
     /([-*•]?\s*(?:\*\*)?(?:Superficie\s+requerida|Superficie\s+estimada|Superficie\s+de\s+terreno)(?:\*\*)?:?\s*).*?(?=(\n|$))/gi,
-    `- **Superficie requerida:** Para una planta de **${capacityMw} MWp**, se estiman necesarias aproximadamente **${hectares} hectáreas** (ratio de diseño: ~${haRatio} ha/MWp para ${techLabel}).`
+    `- **Superficie requerida:** Para una planta de **${formattedCapacity} MWp**, se estiman necesarias aproximadamente **${hectares} hectáreas** (ratio de diseño: ~${formattedHaRatio} ha/MWp para ${techLabel}).`
   );
 
   // 2. Target standalone sentences like "Para una planta de ... MWp se estiman ..."
   text = text.replace(
-    /Para\s+una\s+planta\s+de\s+(?:\*\*)?[\d.]+\s*MWp(?:\*\*)?,?\s*se\s+estiman\s+necesarias?\s+aproximadamente\s+(?:\*\*)?[\d.]+\s*hect[aá]reas(?:\*\*)?.*?(?=(\n|\.|$))/gi,
-    `Para una planta de **${capacityMw} MWp**, se estiman necesarias aproximadamente **${hectares} hectáreas** (ratio de diseño: ~${haRatio} ha/MWp para ${techLabel})`
+    /Para\s+una\s+planta\s+de\s+(?:\*\*)?[\d.,]+\s*MWp(?:\*\*)?,?\s*se\s+estiman\s+necesarias?\s+aproximadamente\s+(?:\*\*)?[\d.,]+\s*hect[aá]reas(?:\*\*)?.*?(?=(\n|\.|$))/gi,
+    `Para una planta de **${formattedCapacity} MWp**, se estiman necesarias aproximadamente **${hectares} hectáreas** (ratio de diseño: ~${formattedHaRatio} ha/MWp para ${techLabel})`
   );
 
   // 3. Keep substation capacity aligned: "La planta de ... MWp requerirá"
   text = text.replace(
-    /La\s+planta\s+de\s+(?:\*\*)?[\d.]+\s*MWp(?:\*\*)?\s+requerir[aá]/gi,
-    `La planta de **${capacityMw} MWp** requerirá`
+    /La\s+planta\s+de\s+(?:\*\*)?[\d.,]+\s*MWp(?:\*\*)?\s+requerir[aá]/gi,
+    `La planta de **${formattedCapacity} MWp** requerirá`
   );
 
   // 4. In "líneas de media/alta tensión para ... MWp"
   text = text.replace(
-    /l[ií]neas\s+de\s+(?:media|alta)\s+tensi[oó]n\s+para\s+(?:\*\*)?[\d.]+\s*MWp(?:\*\*)?/gi,
-    `líneas de media/alta tensión para **${capacityMw} MWp**`
+    /l[ií]neas\s+de\s+(?:media|alta)\s+tensi[oó]n\s+para\s+(?:\*\*)?[\d.,]+\s*MWp(?:\*\*)?/gi,
+    `líneas de media/alta tensión para **${formattedCapacity} MWp**`
   );
 
   // 5. In "cálculo de superficie requerida de ... hectáreas para los ... MWp"
   text = text.replace(
-    /c[aá]lculo\s+de\s+superficie\s+requerida\s+de\s+(?:\*\*)?[\d.]+\s*hect[aá]reas(?:\*\*)?\s+para\s+los\s+(?:\*\*)?[\d.]+\s*MWp/gi,
-    `cálculo de superficie requerida de **${hectares} hectáreas** para los **${capacityMw} MWp**`
+    /c[aá]lculo\s+de\s+superficie\s+requerida\s+de\s+(?:\*\*)?[\d.,]+\s*hect[aá]reas(?:\*\*)?\s+para\s+los\s+(?:\*\*)?[\d.,]+\s*MWp/gi,
+    `cálculo de superficie requerida de **${hectares} hectáreas** para los **${formattedCapacity} MWp**`
   );
+
+  // Apply strict Argentine number formatting rules to all text
+  text = normalizeReportNumbers(text);
 
   return text;
 }
@@ -1168,16 +1174,19 @@ export function formatReportForWhatsApp(
 ): string {
   const haRatio = isTracker ? 1.6 : 1.4;
   const techLabel = isTracker ? 'Seguidores a 1 eje' : 'Estructura fija';
-  const cleanCoords = `${location.lat >= 0 ? `${location.lat.toFixed(4)}°N` : `${Math.abs(location.lat).toFixed(4)}°S`}, ${location.lng >= 0 ? `${location.lng.toFixed(4)}°E` : `${Math.abs(location.lng).toFixed(4)}°W`}`;
+  const cleanCoords = `${location.lat >= 0 ? `${formatCoord(location.lat)}°N` : `${formatCoord(Math.abs(location.lat))}°S`}, ${location.lng >= 0 ? `${formatCoord(location.lng)}°E` : `${formatCoord(Math.abs(location.lng))}°W`}`;
+  const formattedCapacity = formatNumber(config.systemCapacityMw, Number.isInteger(config.systemCapacityMw) ? 0 : 1);
+  const formattedKwp = formatNumber(Math.round(config.systemCapacityMw * 1000));
+  const formattedHaRatio = formatNumber(haRatio, 1);
 
-  // Header with key project specifications formatted for WhatsApp
+  // Header with key project specifications formatted for WhatsApp (strict Argentine format)
   const header = [
     `☀️ *HELIOSITE SOLAR - AUDITORÍA TÉCNICA DE EMPLAZAMIENTO*`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     `📍 *Emplazamiento:* ${location.name}`,
     `🌐 *Coordenadas:* ${cleanCoords}`,
-    `⚡ *Tamaño de Planta:* *${config.systemCapacityMw} MWp* (${Math.round(config.systemCapacityMw * 1000)} kWp)`,
-    `📐 *Superficie Estimada:* *${requiredHectares} hectáreas* (~${haRatio} ha/MWp)`,
+    `⚡ *Tamaño de Planta:* *${formattedCapacity} MWp* (${formattedKwp} kWp)`,
+    `📐 *Superficie Estimada:* *${requiredHectares} hectáreas* (~${formattedHaRatio} ha/MWp)`,
     `⚙️ *Tecnología:* ${techLabel}`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`,
   ].join('\n');
@@ -1198,6 +1207,9 @@ export function formatReportForWhatsApp(
 
   // Clean extra consecutive empty lines
   body = body.replace(/\n{3,}/g, '\n\n').trim();
+
+  // Normalize numbers in the body
+  body = normalizeReportNumbers(body);
 
   const footer = [
     `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━`,

@@ -31,6 +31,7 @@ import {
 } from '../utils/argentinaSolarFramework';
 import { MetricExplanationModal } from './MetricExplanationModal';
 import { MetricHelpTooltip } from './MetricHelpTooltip';
+import { formatNumber, formatPercent, normalizeReportNumbers } from '../utils/formatters';
 
 interface SolarCalcArgentinaProps {
   currentLocation: LocationCoords;
@@ -194,7 +195,7 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
       }
 
       const data = await res.json();
-      setStudyResult(data.report);
+      setStudyResult(normalizeReportNumbers(data.report));
 
       const links: { title: string; uri: string }[] = [];
       (data.groundingChunks || []).forEach((c: any) => {
@@ -215,7 +216,7 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
       const capexRate = recKwp >= 50 ? 800 : 900;
       const totalCapex = Math.round(recKwp * capexRate * (includeBess ? 1.75 : 1));
       const savingsUsd = Math.round(annualGen * activeProvince.industrialTariffUsdKwh);
-      const payback = (totalCapex / savingsUsd).toFixed(1);
+      const payback = formatNumber(totalCapex / savingsUsd, 1);
 
       setLastCalculatedData({
         recKwp,
@@ -401,18 +402,18 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               <MetricHelpTooltip
                 metricId="capex"
                 metricTitle="Inversión Inicial Llave en Mano (CAPEX)"
-                currentValue={`USD ${(lastCalculatedData?.capex || 42000).toLocaleString()}`}
+                currentValue={`USD ${formatNumber(lastCalculatedData?.capex || 42000)}`}
                 onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'capex',
-                    value: `USD ${(lastCalculatedData?.capex || 42000).toLocaleString()}`,
+                    value: `USD ${formatNumber(lastCalculatedData?.capex || 42000)}`,
                   })
                 }
               />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-yellow-300">
-                ${(lastCalculatedData?.capex || 42000).toLocaleString()}
+                ${formatNumber(lastCalculatedData?.capex || 42000)}
               </span>
               <span className="text-xs text-yellow-400/80 font-bold">USD</span>
             </div>
@@ -431,18 +432,18 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               <MetricHelpTooltip
                 metricId="annual_savings"
                 metricTitle="Ahorro Anual en Factura Eléctrica"
-                currentValue={`USD ${(lastCalculatedData?.savings || 7200).toLocaleString()} / año`}
+                currentValue={`USD ${formatNumber(lastCalculatedData?.savings || 7200)} / año`}
                 onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'annual_savings',
-                    value: `USD ${(lastCalculatedData?.savings || 7200).toLocaleString()} / año`,
+                    value: `USD ${formatNumber(lastCalculatedData?.savings || 7200)} / año`,
                   })
                 }
               />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-emerald-400">
-                ${(lastCalculatedData?.savings || 7200).toLocaleString()}
+                ${formatNumber(lastCalculatedData?.savings || 7200)}
               </span>
               <span className="text-xs text-emerald-300/80 font-bold">USD/año</span>
             </div>
@@ -461,18 +462,18 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               <MetricHelpTooltip
                 metricId="payback"
                 metricTitle="Período de Retorno de la Inversión (Payback)"
-                currentValue={`${lastCalculatedData?.payback || 4.5} años`}
+                currentValue={`${lastCalculatedData?.payback || '4,5'} años`}
                 onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'payback',
-                    value: `${lastCalculatedData?.payback || 4.5} años`,
+                    value: `${lastCalculatedData?.payback || '4,5'} años`,
                   })
                 }
               />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-cyan-400">
-                {lastCalculatedData?.payback || 4.5}
+                {lastCalculatedData?.payback || '4,5'}
               </span>
               <span className="text-xs text-cyan-300/80 font-bold">años</span>
             </div>
@@ -509,7 +510,7 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
                 {tc.label}
               </div>
               <div className="text-[10px] text-slate-400 mt-0.5">
-                {tc.roofArea} m² cubierta • {tc.monthlyKwh.toLocaleString()} kWh/mes
+                {formatNumber(tc.roofArea)} m² cubierta • {formatNumber(tc.monthlyKwh)} kWh/mes
               </div>
             </button>
           ))}
@@ -670,7 +671,7 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               <div className="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
                 <span className="text-[10px] text-slate-400 block">Ahorro Anual</span>
                 <span className="text-sm font-black text-slate-200">
-                  USD {lastCalculatedData.savings.toLocaleString()}
+                  USD {formatNumber(lastCalculatedData.savings)}
                 </span>
               </div>
               <div className="bg-slate-950/70 p-2 rounded-lg border border-slate-800">

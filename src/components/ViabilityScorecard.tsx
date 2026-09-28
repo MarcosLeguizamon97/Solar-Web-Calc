@@ -2,6 +2,7 @@ import React from 'react';
 import { Award, Zap, Sliders, ChevronDown, ChevronUp, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { EnergyProjections, SolarSystemConfig } from '../types';
 import { calculateOptimalTilt } from '../utils/solarCalculations';
+import { formatNumber, formatPercent } from '../utils/formatters';
 
 interface ViabilityScorecardProps {
   projections: EnergyProjections;
@@ -167,8 +168,8 @@ export const ViabilityScorecard: React.FC<ViabilityScorecardProps> = ({
                 className="w-full accent-amber-500 cursor-pointer"
               />
               <div className="text-[11px] text-slate-500">
-                Terreno sugerido: ~{suggestedHectares} ha
-                {measuredHectares ? ` (Delimitado en mapa: ${measuredHectares} ha)` : ''}
+                Terreno sugerido: ~{formatNumber(suggestedHectares, 1)} ha
+                {measuredHectares ? ` (Delimitado en mapa: ${formatNumber(measuredHectares, 1)} ha)` : ''}
               </div>
             </div>
 
@@ -308,7 +309,7 @@ export const ViabilityScorecard: React.FC<ViabilityScorecardProps> = ({
             <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
           </div>
           <div className="text-lg font-bold text-white">
-            {projections.annualGhiKwhM2.toLocaleString()}{' '}
+            {formatNumber(projections.annualGhiKwhM2)}{' '}
             <span className="text-xs font-normal text-slate-400">kWh/m²</span>
           </div>
           <div className="text-[11px] text-slate-400">
@@ -325,7 +326,7 @@ export const ViabilityScorecard: React.FC<ViabilityScorecardProps> = ({
             <Zap className="w-3.5 h-3.5 text-emerald-400" />
           </div>
           <div className="text-lg font-bold text-white">
-            {projections.specificYieldKwhKwp.toLocaleString()}{' '}
+            {formatNumber(projections.specificYieldKwhKwp)}{' '}
             <span className="text-xs font-normal text-slate-400">kWh/kWp</span>
           </div>
           <div className="text-[11px] text-slate-400">
@@ -340,7 +341,7 @@ export const ViabilityScorecard: React.FC<ViabilityScorecardProps> = ({
             <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
           </div>
           <div className="text-lg font-bold text-white">
-            {projections.capacityFactorPercent}%
+            {formatPercent(projections.capacityFactorPercent)}
           </div>
           <div className="text-[11px] text-slate-400">
             Horas equivalentes de operación a plena carga
@@ -354,7 +355,7 @@ export const ViabilityScorecard: React.FC<ViabilityScorecardProps> = ({
             <Award className="w-3.5 h-3.5 text-yellow-400" />
           </div>
           <div className="text-lg font-bold text-white">
-            {projections.simplePaybackYears} Años
+            {formatNumber(projections.simplePaybackYears, 1)} Años
           </div>
           <div className="text-[11px] text-slate-400">
             Recuperación de inversión inicial

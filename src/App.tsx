@@ -9,6 +9,7 @@ import { ShareModal } from './components/ShareModal';
 import { LandingDashboard } from './components/LandingDashboard';
 import { MobileNavigation, AppViewMode } from './components/MobileNavigation';
 import { TechnicalEnergyAnalysis } from './components/TechnicalEnergyAnalysis';
+import { SolarCharts } from './components/SolarCharts';
 import {
   CurrentWeather,
   DailyForecast,
@@ -27,6 +28,7 @@ import {
   calculateOptimalTilt,
   calculateSolarProjections,
 } from './utils/solarCalculations';
+import { formatNumber, formatCoord } from './utils/formatters';
 import { Share2, Sparkles, MapPin, Zap, ExternalLink, Activity } from 'lucide-react';
 
 export default function App() {
@@ -54,7 +56,7 @@ export default function App() {
       capacityMw: mw ? parseFloat(mw) : 0.5,
       technology: (tech as SolarSystemConfig['technology']) || 'monocrystalline_tracking',
       tilt: tilt ? parseInt(tilt) : undefined,
-      view: view && ['landing', 'tech_energy', 'kpis', 'calc', 'map', 'weather', 'audit'].includes(view) ? (view === 'audit' ? 'tech_energy' : view) : 'landing',
+      view: view && ['landing', 'tech_energy', 'kpis', 'calc', 'map', 'weather', 'audit', 'charts'].includes(view) ? (view === 'audit' ? 'tech_energy' : view) : 'landing',
     };
   };
 
@@ -308,11 +310,6 @@ export default function App() {
         {/* View 2: Professional Solar Industry KPIs (SolarStudio AI Reference) */}
         {activeView === 'kpis' && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <MobileNavigation
-              activeView={activeView}
-              onSelectView={setActiveView}
-              onOpenShareModal={() => setIsShareModalOpen(true)}
-            />
             <ProfessionalSolarMetrics
               projections={projections}
               config={config}
@@ -325,11 +322,6 @@ export default function App() {
         {/* View 3: SolarCalc Argentina Engine (PyME & Industrial Pre-Studies) */}
         {activeView === 'calc' && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <MobileNavigation
-              activeView={activeView}
-              onSelectView={setActiveView}
-              onOpenShareModal={() => setIsShareModalOpen(true)}
-            />
             <SolarCalcArgentina
               currentLocation={location}
               onLocationChange={(loc) => {
@@ -347,12 +339,6 @@ export default function App() {
         {/* View 4: Geospatial Satellite Map */}
         {activeView === 'map' && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <MobileNavigation
-              activeView={activeView}
-              onSelectView={setActiveView}
-              onOpenShareModal={() => setIsShareModalOpen(true)}
-            />
-
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-bold text-white">
@@ -391,9 +377,9 @@ export default function App() {
                         {location.name}
                       </h2>
                       <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-                        <span>Lat: {location.lat.toFixed(4)}°</span>
+                        <span>Lat: {formatCoord(location.lat)}°</span>
                         <span>•</span>
-                        <span>Lng: {location.lng.toFixed(4)}°</span>
+                        <span>Lng: {formatCoord(location.lng)}°</span>
                       </div>
                     </div>
 
@@ -421,22 +407,22 @@ export default function App() {
                       <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800">
                         <span className="text-slate-400">Generación Estimada:</span>
                         <span className="font-bold text-emerald-400 text-sm">
-                          {projections.annualGenerationMwh.toLocaleString()} MWh/año
+                          {formatNumber(projections.annualGenerationMwh)} MWh/año
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800">
                         <span className="text-slate-400">Inclinación Óptima (Tilt):</span>
                         <span className="font-bold text-cyan-400 text-sm">
-                          {config.tiltAngleDegrees}° {location.lat >= 0 ? '(Sur)' : '(Norte)'}
+                          {formatNumber(config.tiltAngleDegrees)}° {location.lat >= 0 ? '(Sur)' : '(Norte)'}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800">
                         <span className="text-slate-400">Superficie Terreno Estimada:</span>
                         <span className="font-bold text-slate-200 text-sm">
-                          {calculatedRequiredHectares.toFixed(1)} ha
-                          <span className="text-[10px] text-slate-500 font-normal ml-1.5">(~{haRatio} ha/MWp)</span>
+                          {formatNumber(calculatedRequiredHectares, 1)} ha
+                          <span className="text-[10px] text-slate-500 font-normal ml-1.5">(~{formatNumber(haRatio, 1)} ha/MWp)</span>
                         </span>
                       </div>
                     </div>
@@ -469,11 +455,6 @@ export default function App() {
         {/* View 5: Análisis Técnico y Energético (Auditoría Maps Grounding, Proyecciones de Eficiencia y Modelado Energético) */}
         {(activeView === 'tech_energy' || activeView === 'audit') && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <MobileNavigation
-              activeView={activeView === 'audit' ? 'tech_energy' : activeView}
-              onSelectView={setActiveView}
-              onOpenShareModal={() => setIsShareModalOpen(true)}
-            />
             <TechnicalEnergyAnalysis
               location={location}
               config={config}
@@ -489,16 +470,22 @@ export default function App() {
         {/* View 6: Clima y Radiación Meteorológica en Vivo */}
         {activeView === 'weather' && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <MobileNavigation
-              activeView={activeView}
-              onSelectView={setActiveView}
-              onOpenShareModal={() => setIsShareModalOpen(true)}
-            />
             <WeatherPanel
               weather={weatherData.current}
               hourly={weatherData.hourly}
               daily={weatherData.daily}
               loading={loadingWeather}
+            />
+          </div>
+        )}
+
+        {/* View 7: Gráficos de Simulación y Curva Solar 24h */}
+        {activeView === 'charts' && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <SolarCharts
+              hourly={weatherData.hourly}
+              projections={projections}
+              systemCapacityMw={config.systemCapacityMw}
             />
           </div>
         )}
@@ -523,7 +510,7 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950/90 py-6 px-4 sm:px-6 text-xs text-slate-500 hidden md:block">
+      <footer className="border-t border-slate-800/80 bg-slate-950/90 py-6 px-4 sm:px-6 text-xs text-slate-500 mb-16 hidden md:block">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-slate-300">HelioSite Pro</span>
