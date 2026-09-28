@@ -51,7 +51,7 @@ function generateFallbackSolarReport(params: {
   lngNum: number;
   locationName?: string;
   systemCapacityMw: number;
-  terrainHectares: number;
+  terrainHectares?: number;
   technology: string;
   tiltDegrees: number;
   annualGhiKwhM2: number;
@@ -69,31 +69,40 @@ function generateFallbackSolarReport(params: {
     averageTempC,
   } = params;
 
+  const rawCap = Number(systemCapacityMw);
+  const capacityMwNum = (!isNaN(rawCap) && rawCap > 0) ? rawCap : 0.5;
   const isHighRadiation = annualGhiKwhM2 >= 2000;
   const isTracker = technology === 'monocrystalline_tracking' || technology === 'bifacial_tracking';
+  const haPerMw = isTracker ? 1.6 : 1.4;
+  const requiredHectares = (Math.round(capacityMwNum * haPerMw * 10) / 10).toFixed(1);
 
   return `### 📍 1. Evaluación Geográfica y Terreno
+
 - **Coordenadas analizadas:** ${latNum.toFixed(4)}° Lat, ${lngNum.toFixed(4)}° Lng (${locationName || 'Zona Seleccionada'}).
 - **Topografía y orografía:** El emplazamiento presenta una pendiente media favorable para implantación fotovoltaica con escasas sombras orográficas en el horizonte este-oeste.
 - **Acceso vial:** La conectividad logística permite el tránsito de vehículos pesados (transporte de transformadores de potencia, seguidores y contenedores de inversores) mediante las vías interurbanas próximas visibles en satélite.
-- **Superficie requerida:** Para una planta de **${systemCapacityMw} MWp**, se estiman necesarias aproximadamente **${terrainHectares || (systemCapacityMw * 1.6).toFixed(1)} hectáreas**, lo cual encaja dentro de las dimensiones del lote delimitado.
+- **Superficie requerida:** Para una planta de **${capacityMwNum} MWp**, se estiman necesarias aproximadamente **${requiredHectares} hectáreas** (ratio de diseño: ~${haPerMw} ha/MWp para ${isTracker ? 'seguidores a 1 eje' : 'estructura fija'})${terrainHectares && Math.abs(Number(terrainHectares) - Number(requiredHectares)) > 0.1 ? ` (superficie delimitada en parcela: ${Number(terrainHectares).toFixed(1)} ha)` : ''}.
 
 ### ⚡ 2. Factibilidad de Evacuación e Infraestructura Eléctrica
+
 - **Conexión a red:** Se recomienda realizar el seccionamiento o entronque a la línea de Media Tensión (13.2 kV a 33 kV) o Alta Tensión más próxima ubicada en el corredor vial regional.
-- **Subestación transformadora:** La planta de **${systemCapacityMw} MWp** requerirá una subestación elevadora propia (ej. 0.8 kV / 33 kV) con centro de seccionamiento y celda de protección homologada por el distribuidor/operador del sistema.
-- **Capacidad de inyección:** Al ser un proyecto de escala comercial, se aconseja iniciar formalmente el estudio de capacidad de red (Capacidad de Evacuación e Interconexión) para reservar el nodo.
+- **Subestación transformadora:** La planta de **${capacityMwNum} MWp** requerirá una subestación elevadora propia (ej. 0.8 kV / 33 kV) con centro de seccionamiento y celda de protección homologada por el distribuidor/operador del sistema.
+- **Capacidad de inyección:** Al ser un proyecto de escala comercial (${capacityMwNum} MWp), se aconseja iniciar formalmente el estudio de capacidad de red (Capacidad de Evacuación e Interconexión) para reservar el nodo.
 
 ### ☀️ 3. Potencial de Rendimiento Energético Local
+
 - **Recurso Solar:** Con un GHI de **${annualGhiKwhM2.toLocaleString()} kWh/m²/año**, el sitio se sitúa en un rango **${isHighRadiation ? 'sobresaliente (Tier 1 Global)' : 'sólido y altamente viable'}**.
 - **Tecnología recomendada:** ${isTracker ? 'La elección de seguidores a un eje (Single-Axis Trackers) con módulos bifaciales maximiza la ganancia matutina y vespertina entre un +22% y +28% en comparación con estructuras fijas.' : 'La estructura fija con inclinación de ' + tiltDegrees + '° ofrece un costo de instalación menor (menor CAPEX) y mínimo mantenimiento.'}
 - **Impacto térmico y suciedad (Soiling):** Con temperatura media de **${averageTempC}°C**, se prevén pérdidas térmicas controladas. Se aconseja programar 2 a 3 ciclos de limpieza anuales para mitigar el ensuciamiento.
 
 ### ⚠️ 4. Riesgos Críticos y Aspectos Medioambientales
+
 - **Restricciones ambientales:** Se debe verificar la no afección a corredores biológicos protegidos o cuencas aluviales secas con riesgo de inundación temporal por lluvias torrenciales.
 - **Carga de viento:** Diseñar las cimentaciones hincadas de los seguidores o mesas fijas según la velocidad de ráfaga máxima local (viento medio actual: normal).
 - **Impacto acústico y visual:** Muy bajo; adecuado para coexistir con usos agrícolas o ganaderos periféricos.
 
 ### 🎯 5. Veredicto y Recomendaciones de Ingeniería
+
 - **Calificación de Viabilidad:** **${isHighRadiation ? '9.2 / 10 (Excelente para Inversión)' : '8.4 / 10 (Muy Favorable)'}**.
 - **Próximos pasos clave:**
   1. Ejecutar estudio geotécnico de resistividad del suelo y ensayo de hincado de perfiles (Pull-out test).
@@ -144,12 +153,14 @@ app.post('/api/gemini/solar-analysis', async (req, res) => {
       latitude,
       longitude,
       locationName,
-      systemCapacityMw = 5,
+      systemCapacityMw = 0.5,
       tiltDegrees = 25,
       technology = 'monocrystalline_tracking',
-      terrainHectares = 10,
+      terrainHectares,
+      requiredHectares: clientRequiredHectares,
       annualGhiKwhM2 = 2100,
       averageTempC = 22,
+      force = false,
     } = req.body;
 
     if (latitude === undefined || longitude === undefined) {
@@ -158,34 +169,55 @@ app.post('/api/gemini/solar-analysis', async (req, res) => {
 
     const latNum = Number(latitude);
     const lngNum = Number(longitude);
+    const rawCap = Number(systemCapacityMw);
+    const capacityMwNum = (!isNaN(rawCap) && rawCap > 0) ? rawCap : 0.5;
 
-    // Cache check
-    const cacheKey = `${latNum.toFixed(3)}_${lngNum.toFixed(3)}_${systemCapacityMw}_${technology}_${tiltDegrees}`;
-    const cached = solarAnalysisCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-      return res.json({
-        report: cached.report,
-        groundingChunks: cached.groundingChunks,
-        modelUsed: cached.modelUsed,
-      });
+    const isTracker = technology === 'monocrystalline_tracking' || technology === 'bifacial_tracking';
+    const haPerMw = isTracker ? 1.6 : 1.4;
+    const calculatedRequiredHectares = clientRequiredHectares !== undefined && clientRequiredHectares !== null
+      ? Number(clientRequiredHectares).toFixed(1)
+      : (Math.round(capacityMwNum * haPerMw * 10) / 10).toFixed(1);
+
+    const effectiveTerrainHectares = terrainHectares !== undefined && terrainHectares !== null
+      ? Number(terrainHectares)
+      : Number(calculatedRequiredHectares);
+
+    // Cache check (bypass if force is requested)
+    const cacheKey = `${latNum.toFixed(3)}_${lngNum.toFixed(3)}_${capacityMwNum}_${calculatedRequiredHectares}_${technology}_${tiltDegrees}`;
+    if (!force) {
+      const cached = solarAnalysisCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+        return res.json({
+          report: cached.report,
+          groundingChunks: cached.groundingChunks,
+          modelUsed: cached.modelUsed,
+        });
+      }
+    } else {
+      solarAnalysisCache.delete(cacheKey);
     }
 
     const prompt = `Actúa como un Ingeniero Consultor Senior en Energía Solar y Evaluación de Emplazamiento Fotovoltaico.
 Analiza la viabilidad de instalar una planta solar fotovoltaica en las siguientes coordenadas geográficas:
 - Ubicación aproximada: ${locationName || 'Coordenadas seleccionadas'}
 - Coordenadas: Latitud ${latNum.toFixed(4)}, Longitud ${lngNum.toFixed(4)}
-- Capacidad proyectada: ${systemCapacityMw} MWp (Megavatios pico)
-- Superficie estimada disponible: ${terrainHectares} hectáreas
-- Tecnología: ${technology === 'monocrystalline_tracking' ? 'Paneles Monocristalinos Bifaciales con Seguidor a 1 Eje (Single-Axis Tracker)' : 'Estructura Fija con Inclinación Óptima'}
+- Capacidad proyectada: ${capacityMwNum} MWp (Megavatios pico)
+- Superficie requerida estimada: exactamente ${calculatedRequiredHectares} hectáreas (calculada estrictamente a razón de ~${haPerMw} ha por MWp para tecnología ${isTracker ? 'con seguidor a 1 eje' : 'fija'})
+${terrainHectares && Math.abs(Number(terrainHectares) - Number(calculatedRequiredHectares)) > 0.1 ? `- Superficie trazada/disponible en parcela satelital: ${Number(terrainHectares).toFixed(1)} hectáreas` : ''}
+- Tecnología: ${isTracker ? 'Paneles Monocristalinos Bifaciales con Seguidor a 1 Eje (Single-Axis Tracker)' : 'Estructura Fija con Inclinación Óptima'}
 - Inclinación: ${tiltDegrees}°
 - Radiación solar anual de referencia (GHI): ${annualGhiKwhM2} kWh/m²/año
 - Temperatura media local: ${averageTempC} °C
 
+DIRECTIVA OBLIGATORIA DE DIMENSIONAMIENTO:
+En la sección "1. Evaluación Geográfica y Terreno", debes especificar exactamente la superficie requerida para la potencia seleccionada:
+"Para una planta de ${capacityMwNum} MWp, se estiman necesarias aproximadamente ${calculatedRequiredHectares} hectáreas (a razón de ~${haPerMw} ha por cada MWp)". No utilices números de otros tamaños ni valores estáticos.
+
 Utiliza Google Maps Grounding para verificar la geografía del lugar, relieve, vías de comunicación cercanas (carreteras nacionales o secundarias para transporte de transformadores y paneles), proximidad a redes eléctricas o subestaciones existentes, poblaciones cercanas para mano de obra e impacto ambiental o áreas protegidas próximas.
 
 Por favor, proporciona un informe estructurado y profesional en español en formato Markdown con las siguientes secciones:
-1. ### 📍 Evaluación Geográfica y Terreno (Topografía, orografía, orientación del terreno, accesibilidad vial)
-2. ### ⚡ Factibilidad de Evacuación e Infraestructura Eléctrica (Proximidad estimada a subestaciones, líneas de media/alta tensión y logística)
+1. ### 📍 Evaluación Geográfica y Terreno (Topografía, orografía, orientación del terreno, accesibilidad vial y cálculo de superficie requerida de ${calculatedRequiredHectares} hectáreas para los ${capacityMwNum} MWp)
+2. ### ⚡ Factibilidad de Evacuación e Infraestructura Eléctrica (Proximidad estimada a subestaciones, líneas de media/alta tensión para ${capacityMwNum} MWp y logística)
 3. ### ☀️ Potencial de Rendimiento Energético Local (Análisis del recurso solar, impacto de temperatura y polvo/ensuciamiento o soiling)
 4. ### ⚠️ Riesgos Críticos y Aspectos Medioambientales (Restricciones ecológicas, cauces de agua, sombras orográficas, vientos)
 5. ### 🎯 Veredicto y Recomendaciones de Ingeniería (Calificación de viabilidad del 1 al 10, optimizaciones sugeridas de tilt/inversores y próximos pasos recomendados)
@@ -245,8 +277,8 @@ Sé riguroso, realista y técnico, aportando valor tangible para la toma de deci
         latNum,
         lngNum,
         locationName,
-        systemCapacityMw,
-        terrainHectares,
+        systemCapacityMw: capacityMwNum,
+        terrainHectares: effectiveTerrainHectares,
         technology,
         tiltDegrees,
         annualGhiKwhM2,
@@ -275,16 +307,23 @@ Sé riguroso, realista y técnico, aportando valor tangible para la toma de deci
   } catch (err: any) {
     const latNum = Number(req.body?.latitude) || -33.0298;
     const lngNum = Number(req.body?.longitude) || -60.6385;
+    const rawCap = Number(req.body?.systemCapacityMw);
+    const capacityMwNum = (!isNaN(rawCap) && rawCap > 0) ? rawCap : 0.5;
+    const isTracker = req.body?.technology === 'monocrystalline_tracking' || req.body?.technology === 'bifacial_tracking';
+    const haRatio = isTracker ? 1.6 : 1.4;
+    const calculatedHectares = req.body?.requiredHectares !== undefined && req.body?.requiredHectares !== null
+      ? Number(req.body.requiredHectares)
+      : Math.round(capacityMwNum * haRatio * 10) / 10;
     const fallbackReport = generateFallbackSolarReport({
       latNum,
       lngNum,
       locationName: req.body?.locationName,
-      systemCapacityMw: req.body?.systemCapacityMw || 5,
-      terrainHectares: req.body?.terrainHectares || 10,
+      systemCapacityMw: capacityMwNum,
+      terrainHectares: calculatedHectares,
       technology: req.body?.technology || 'monocrystalline_tracking',
-      tiltDegrees: req.body?.tiltDegrees || 25,
-      annualGhiKwhM2: req.body?.annualGhiKwhM2 || 2100,
-      averageTempC: req.body?.averageTempC || 22,
+      tiltDegrees: Number(req.body?.tiltDegrees) || 25,
+      annualGhiKwhM2: Number(req.body?.annualGhiKwhM2) || 2100,
+      averageTempC: Number(req.body?.averageTempC) || 22,
     });
 
     return res.json({

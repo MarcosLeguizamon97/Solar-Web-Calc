@@ -99,7 +99,7 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
                   <span className="text-xs text-amber-300 font-bold ml-1">MWp</span>
                 </div>
                 <span className="text-[11px] text-slate-400 hidden sm:inline">
-                  ({Math.round(config.systemCapacityMw * 1000)} kWp DC)
+                  ({Math.round(config.systemCapacityMw * 1000)} kWp DC • ~{(config.systemCapacityMw * 1.6).toFixed(1)} ha)
                 </span>
               </div>
             </div>

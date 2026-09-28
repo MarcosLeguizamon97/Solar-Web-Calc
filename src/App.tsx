@@ -68,9 +68,6 @@ export default function App() {
     initialParams?.location || SOLAR_PRESETS[0]
   );
 
-  // Measured land area in hectares from map polygon tool (0.5 MWp ~ 0.8 ha)
-  const [measuredHectares, setMeasuredHectares] = useState<number>(0.8);
-
   // System Configuration State (Default: 0.5 MWp / 500 kWp)
   const [config, setConfig] = useState<SolarSystemConfig>({
     systemCapacityMw: initialParams?.capacityMw ?? 0.5,
@@ -87,6 +84,12 @@ export default function App() {
     discountRatePercent: 7.5,
     annualDegradationPercent: 0.45,
   });
+
+  // Dynamically calculated required surface (~1.6 ha / MWp for tracker, ~1.4 ha / MWp for fixed)
+  const isTrackerTech = config.technology === 'monocrystalline_tracking' || config.technology === 'bifacial_tracking';
+  const haRatio = isTrackerTech ? 1.6 : 1.4;
+  const calculatedRequiredHectares = Math.round(config.systemCapacityMw * haRatio * 10) / 10;
+  const effectiveHectares = calculatedRequiredHectares;
 
   // Weather and Solar Radiation Data
   const [weatherData, setWeatherData] = useState<{
@@ -219,11 +222,13 @@ export default function App() {
           longitude: location.lng,
           locationName: location.name,
           systemCapacityMw: config.systemCapacityMw,
+          requiredHectares: calculatedRequiredHectares,
+          terrainHectares: effectiveHectares,
           tiltDegrees: config.tiltAngleDegrees,
           technology: config.technology,
-          terrainHectares: measuredHectares || 10,
           annualGhiKwhM2: projections.annualGhiKwhM2,
           averageTempC: weatherData.current.temperature,
+          force: force,
         }),
       });
 
@@ -253,19 +258,9 @@ export default function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       handleGenerateGeminiReport();
-    }, 1200);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [location.lat, location.lng, config.systemCapacityMw]);
-
-  // Polygon area change handler
-  const handleTerrainAreaChange = (ha: number) => {
-    setMeasuredHectares(ha);
-    // If hectares is significantly larger, suggest capacity: 1 MWp ~ 1.6 ha
-    const suggestedMw = Math.max(0.5, Math.round((ha / 1.6) * 10) / 10);
-    if (Math.abs(suggestedMw - config.systemCapacityMw) > 2) {
-      setConfig((prev) => ({ ...prev, systemCapacityMw: suggestedMw }));
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-amber-500 selection:text-black">
@@ -349,7 +344,7 @@ export default function App() {
           </div>
         )}
 
-        {/* View 4: Geospatial Satellite Map & Parcel Delimitation */}
+        {/* View 4: Geospatial Satellite Map */}
         {activeView === 'map' && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <MobileNavigation
@@ -362,7 +357,7 @@ export default function App() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-bold text-white">
                   <MapPin className="w-4 h-4 text-amber-400" />
-                  <span>Mapa Geoespacial y Delimitación de Parcela Solar</span>
+                  <span>Mapa Geoespacial Interactivo de Emplazamiento Solar</span>
                 </div>
                 <div className="text-xs text-slate-400 hidden sm:block">
                   Ubicación activa: <strong className="text-slate-200">{location.name}</strong>
@@ -382,8 +377,6 @@ export default function App() {
                         azimuthDegrees: newLoc.lat >= 0 ? 180 : 0,
                       }));
                     }}
-                    onTerrainAreaChange={handleTerrainAreaChange}
-                    measuredHectares={measuredHectares}
                   />
                 </div>
 
@@ -440,9 +433,10 @@ export default function App() {
                       </div>
 
                       <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800">
-                        <span className="text-slate-400">Superficie Terreno:</span>
+                        <span className="text-slate-400">Superficie Terreno Estimada:</span>
                         <span className="font-bold text-slate-200 text-sm">
-                          {measuredHectares.toFixed(1)} ha
+                          {calculatedRequiredHectares.toFixed(1)} ha
+                          <span className="text-[10px] text-slate-500 font-normal ml-1.5">(~{haRatio} ha/MWp)</span>
                         </span>
                       </div>
                     </div>
@@ -466,7 +460,7 @@ export default function App() {
                 config={config}
                 onConfigChange={setConfig}
                 latitude={location.lat}
-                measuredHectares={measuredHectares}
+                measuredHectares={effectiveHectares}
               />
             </section>
           </div>

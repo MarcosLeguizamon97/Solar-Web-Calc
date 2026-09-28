@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bot, MapPin, ExternalLink, RefreshCw, AlertCircle, CheckCircle, Shield, Building2, Zap } from 'lucide-react';
 import { GeminiAnalysisState, LocationCoords, SolarSystemConfig } from '../types';
+import { WhatsAppIcon, formatReportForWhatsApp } from './TechnicalEnergyAnalysis';
 
 interface GeminiSolarReportProps {
   analysisState: GeminiAnalysisState;
@@ -16,6 +17,40 @@ export const GeminiSolarReport: React.FC<GeminiSolarReportProps> = ({
   config,
 }) => {
   const { report, groundingChunks, loading, error, timestamp } = analysisState;
+
+  const isTracker = config.technology === 'monocrystalline_tracking' || config.technology === 'bifacial_tracking';
+  const haRatio = isTracker ? 1.6 : 1.4;
+  const currentRequiredHectares = (Math.round(config.systemCapacityMw * haRatio * 10) / 10).toFixed(1);
+
+  const processedReport = React.useMemo(() => {
+    if (!report) return '';
+    let text = report;
+    text = text.replace(
+      /([-*•]?\s*(?:\*\*)?(?:Superficie\s+requerida|Superficie\s+estimada|Superficie\s+de\s+terreno)(?:\*\*)?:?\s*).*?(?=(\n|$))/gi,
+      `- **Superficie requerida:** Para una planta de **${config.systemCapacityMw} MWp**, se estiman necesarias aproximadamente **${currentRequiredHectares} hectáreas** (ratio de diseño: ~${haRatio} ha/MWp para ${isTracker ? 'seguidores a 1 eje' : 'estructura fija'}).`
+    );
+    text = text.replace(
+      /Para\s+una\s+planta\s+de\s+(?:\*\*)?[\d.]+\s*MWp(?:\*\*)?,?\s*se\s+estiman\s+necesarias?\s+aproximadamente\s+(?:\*\*)?[\d.]+\s*hect[aá]reas(?:\*\*)?.*?(?=(\n|\.|$))/gi,
+      `Para una planta de **${config.systemCapacityMw} MWp**, se estiman necesarias aproximadamente **${currentRequiredHectares} hectáreas** (ratio de diseño: ~${haRatio} ha/MWp para ${isTracker ? 'seguidores a 1 eje' : 'estructura fija'})`
+    );
+    text = text.replace(
+      /La\s+planta\s+de\s+(?:\*\*)?[\d.]+\s*MWp(?:\*\*)?\s+requerir[aá]/gi,
+      `La planta de **${config.systemCapacityMw} MWp** requerirá`
+    );
+    return text;
+  }, [report, config.systemCapacityMw, currentRequiredHectares, haRatio, isTracker]);
+
+  const whatsAppShareUrl = React.useMemo(() => {
+    if (!processedReport) return '';
+    const text = formatReportForWhatsApp(
+      processedReport,
+      location,
+      config,
+      currentRequiredHectares,
+      isTracker
+    );
+    return `https://wa.me/?text=${encodeURIComponent(text)}`;
+  }, [processedReport, location, config, currentRequiredHectares, isTracker]);
 
   // Extract all unique verified Google Maps links from groundingChunks
   const mapSources = (groundingChunks || [])
@@ -113,24 +148,36 @@ export const GeminiSolarReport: React.FC<GeminiSolarReportProps> = ({
       {/* Report Content */}
       {report && !loading && (
         <div className="space-y-5 animate-in fade-in duration-300">
-          {/* Metadata bar */}
-          <div className="flex flex-wrap items-center justify-between text-xs text-slate-400 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+          {/* Metadata bar with WhatsApp Share Button */}
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
               <span>
                 Auditoría generada para: <strong>{location.name || 'Emplazamiento'}</strong> ({location.lat.toFixed(4)}, {location.lng.toFixed(4)})
               </span>
             </div>
-            {timestamp && (
-              <span className="text-[11px] text-slate-500">
-                {new Date(timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            )}
+            <div className="flex items-center gap-2.5">
+              {timestamp && (
+                <span className="text-[11px] text-slate-500">
+                  {new Date(timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+              <a
+                href={whatsAppShareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1 bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 font-bold text-xs rounded-lg shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+                title="Compartir por WhatsApp"
+              >
+                <WhatsAppIcon className="w-3.5 h-3.5 fill-slate-950" />
+                <span>Compartir</span>
+              </a>
+            </div>
           </div>
 
           {/* Formatted Markdown Body */}
           <div className="prose prose-invert max-w-none text-slate-300 text-xs md:text-sm leading-relaxed space-y-4 bg-slate-950/40 p-4 md:p-6 rounded-xl border border-slate-800/90">
-            <ReportMarkdownRenderer content={report} />
+            <ReportMarkdownRenderer content={processedReport} />
           </div>
 
           {/* Google Maps Grounding Sources Display (MANDATORY REQUIREMENT) */}
