@@ -2,6 +2,8 @@
 
 **Heliosite Solar** es una aplicación web de auditoría técnica, simulación energética y evaluación de viabilidad para proyectos fotovoltaicos (On-Grid). Está diseñada para ofrecer una experiencia móvil optimizada, cálculos reactivos en tiempo real y reportes técnicos de alta precisión adaptados al estándar de la industria.
 
+**Aplicación web creada a través de Google IA Studio**
+
 ---
 
 ## 🚀 Características Principales
