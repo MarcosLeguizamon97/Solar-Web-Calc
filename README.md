@@ -4,7 +4,7 @@
 
 **Aplicación web creada a través de Google IA Studio**
 
-https://heliosite-an-lisis-solar-y-viabilidad-fotovoltaic.ai.studio/
+🌐 **Enlace a la aplicación:** [Heliosite Solar en Google AI Studio](https://heliosite-an-lisis-solar-y-viabilidad-fotovoltaic.ai.studio/) 
 
 ---
 
@@ -32,6 +32,15 @@ https://heliosite-an-lisis-solar-y-viabilidad-fotovoltaic.ai.studio/
 * Navegación móvil optimizada mediante una barra fija inferior intuitiva.
 * Interfaz limpia sin elementos redundantes, organizada en pestañas estructuradas (*Inicio, Técnico, KPIs, Calculadora, Mapa*).
 * Tarjetas de selección dinámicas estilo grilla para una consulta fluida de métricas y gráficos.
+
+---
+
+## 💡 En Resumen
+
+* **Interfaz intuitiva:** Diseñada para ofrecer una experiencia accesible y fluida en el análisis técnico de proyectos de energía solar.
+* **Planificación a escala nacional:** Una herramienta versátil para proyectar y planificar instalaciones fotovoltaicas en cualquier punto del país.
+* **Democratización de la información:** Pone al alcance de cualquier dispositivo los datos clave necesarios para emprender con éxito en el proyecto.
+* **Transición energética:** Una respuesta directa al incremento constante en la demanda energética, impulsando el aprovechamiento inteligente del recurso solar.
 
 ---
 
