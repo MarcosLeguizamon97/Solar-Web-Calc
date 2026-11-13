@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Zap,
   Building2,
@@ -23,24 +23,33 @@ import {
   Info,
   TrendingUp,
 } from 'lucide-react';
-import { LocationCoords } from '../types';
+import { EnergyProjections, LocationCoords, SolarSystemConfig } from '../types';
 import {
   ARGENTINA_PROVINCES,
+  ARGENTINA_REGULATORY_DISCLAIMER,
   ArgentinaProvinceInfo,
+  DistributedGenModality,
+  classifyArgentinaSolarProject,
   detectArgentinaProvince,
 } from '../utils/argentinaSolarFramework';
 import { MetricExplanationModal } from './MetricExplanationModal';
 import { MetricHelpTooltip } from './MetricHelpTooltip';
+import { ExecutiveExportPanel } from './ExecutiveExportPanel';
+import { calculateSolarProjections } from '../utils/solarCalculations';
 import { formatNumber, formatPercent, normalizeReportNumbers } from '../utils/formatters';
 
 interface SolarCalcArgentinaProps {
   currentLocation: LocationCoords;
   onLocationChange: (loc: LocationCoords) => void;
+  config?: SolarSystemConfig;
+  projections?: EnergyProjections;
 }
 
 export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
   currentLocation,
   onLocationChange,
+  config,
+  projections,
 }) => {
   // Detected or selected province
   const [selectedProvinceId, setSelectedProvinceId] = useState<string>('santa_fe');
@@ -64,6 +73,8 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
   const [monthlyConsumptionKwh, setMonthlyConsumptionKwh] = useState<number>(12000);
   const [roofType, setRoofType] = useState<string>('Chapa trapezoidal/zinc');
   const [includeBess, setIncludeBess] = useState<boolean>(false);
+  const [modality, setModality] = useState<DistributedGenModality>('individual');
+  const [contractedPowerKw, setContractedPowerKw] = useState<number>(60);
   const [locationName, setLocationName] = useState<string>(
     'Villa Gobernador Gálvez (Gran Rosario)'
   );
@@ -80,8 +91,55 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [studyResult, setStudyResult] = useState<string | null>(null);
   const [groundingLinks, setGroundingLinks] = useState<{ title: string; uri: string }[]>([]);
-  const [lastCalculatedData, setLastCalculatedData] = useState<any>(null);
   const [activeMetricModal, setActiveMetricModal] = useState<{ id: string; value?: string | number } | null>(null);
+
+  // Pure reactive calculation derived dynamically from active parameters & 2025/2026 Net Billing rules
+  const calculatedData = useMemo(() => {
+    const annualKwh = monthlyConsumptionKwh * 12;
+    const genKwhKwp = activeProvince.avgSpecificYieldKwhKwp || 1540;
+    const recKwp = Math.max(
+      1,
+      Math.min(
+        Math.floor(roofAreaM2 / 6),
+        Math.round((annualKwh * 0.55) / genKwhKwp)
+      )
+    );
+    const acCoupleKw = Math.round((recKwp / 1.25) * 10) / 10;
+    const classification = classifyArgentinaSolarProject(
+      acCoupleKw,
+      recKwp,
+      modality,
+      contractedPowerKw > 0 ? contractedPowerKw : undefined
+    );
+
+    const annualGen = recKwp * genKwhKwp;
+    const capexRate = recKwp >= 300 ? 730 : recKwp >= 50 ? 800 : 900;
+    const totalCapex = Math.round(recKwp * capexRate * (includeBess ? 1.75 : 1));
+
+    // Net Billing (Res. SE 287/2025): ~75% direct daytime self-consumption at avoided tariff + ~25% grid injection at wholesale/MEM tariff (~65% of retail rate, no extra backup/grid charges)
+    const selfConsumptionRatio = includeBess ? 0.92 : 0.75;
+    const injectionTariffRatio = classification.categoryCode === 'MATER' ? 0.75 : 0.65;
+    const effectiveTariffUsdKwh =
+      activeProvince.industrialTariffUsdKwh *
+      (selfConsumptionRatio + (1 - selfConsumptionRatio) * injectionTariffRatio);
+
+    const savingsUsd = Math.round(annualGen * effectiveTariffUsdKwh);
+    const payback = formatNumber(totalCapex / (savingsUsd > 0 ? savingsUsd : 1), 1);
+
+    return {
+      recKwp,
+      acCoupleKw,
+      classification,
+      areaOccupied: recKwp * 6,
+      areaPercent: Math.round(((recKwp * 6) / Math.max(1, roofAreaM2)) * 100),
+      annualGen,
+      coverage: Math.min(85, Math.round((annualGen / Math.max(1, annualKwh)) * 100)),
+      capex: totalCapex,
+      savings: savingsUsd,
+      payback,
+      panelsCount: Math.round(recKwp * 1.7),
+    };
+  }, [roofAreaM2, monthlyConsumptionKwh, activeProvince, includeBess, modality, contractedPowerKw]);
 
   // Quick preset test cases in Argentina
   const testCases = [
@@ -180,6 +238,10 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
         utilityName: activeProvince.utility,
         roofType,
         includeBess,
+        modality,
+        contractedPowerKw,
+        acCoupleKw: calculatedData.acCoupleKw,
+        categoryCode: calculatedData.classification.categoryCode,
         latitude: currentLocation.lat,
         longitude: currentLocation.lng,
       };
@@ -204,31 +266,6 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
         }
       });
       setGroundingLinks(links);
-
-      // Pre-calculated stats for visual badges
-      const annualKwh = monthlyConsumptionKwh * 12;
-      const genKwhKwp = activeProvince.avgSpecificYieldKwhKwp || 1540;
-      const recKwp = Math.min(
-        Math.floor(roofAreaM2 / 6),
-        Math.round((annualKwh * 0.55) / genKwhKwp)
-      );
-      const annualGen = recKwp * genKwhKwp;
-      const capexRate = recKwp >= 50 ? 800 : 900;
-      const totalCapex = Math.round(recKwp * capexRate * (includeBess ? 1.75 : 1));
-      const savingsUsd = Math.round(annualGen * activeProvince.industrialTariffUsdKwh);
-      const payback = formatNumber(totalCapex / savingsUsd, 1);
-
-      setLastCalculatedData({
-        recKwp,
-        areaOccupied: recKwp * 6,
-        areaPercent: Math.round(((recKwp * 6) / roofAreaM2) * 100),
-        annualGen,
-        coverage: Math.min(85, Math.round((annualGen / annualKwh) * 100)),
-        capex: totalCapex,
-        savings: savingsUsd,
-        payback,
-        panelsCount: Math.round(recKwp * 1.7),
-      });
     } catch (err: any) {
       console.error('Error generating pre-feasibility study:', err);
       setStudyResult(`Error al procesar el pre-estudio: ${err.message || 'Error de conexión'}`);
@@ -253,7 +290,7 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               Consultor On-Grid Industrial Argentina
             </span>
             <span className="text-xs text-slate-400 font-medium">
-              Ley Nacional 27.424 & Marcos Provinciales (23 Provincias + CABA)
+              Ley 27.424 (Res. SE 287/2025) • Ley 27.191 (Res. SE 400/2025) • 24 Jurisdicciones
             </span>
           </div>
 
@@ -265,9 +302,7 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
           </h2>
 
           <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
-            Diagnóstico instantáneo para dueños de PyMEs, industrias y establecimientos en cualquier
-            punto de Argentina. Calcula potencia óptima en kWp, m² necesarios de cubierta, CAPEX en USD,
-            ahorro proyectado y trámite de prosumidor con medidor bidireccional.
+            Diagnóstico instantáneo para usuarios residenciales, PyMEs, grandes industrias (UGpe/UGme/UGma hasta 12 MW) y proyectos MATER en toda Argentina. Calcula potencia de acople, facturación neta, CAPEX en USD, telemetría (&gt;10 kW), normas AEA/IRAM y trámite de interconexión.
           </p>
         </div>
 
@@ -323,7 +358,7 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
           <span className="font-bold text-slate-200 truncate block" title={activeProvince.regulatoryLaw}>
             {activeProvince.regulatoryLaw}
           </span>
-          <span className="text-[10px] text-emerald-400 font-medium">Medidor Bidireccional</span>
+          <span className="text-[10px] text-emerald-400 font-medium">Facturación Neta • Medidor Bidireccional</span>
         </div>
 
         <div>
@@ -340,12 +375,12 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
 
         <div>
           <span className="text-[10px] text-slate-500 uppercase font-bold block">
-            Beneficio Impositivo
+            Encuadre Vigente (2025/2026)
           </span>
-          <span className="font-bold text-emerald-300 truncate block" title={activeProvince.taxExemptions}>
-            Exención Ingresos Brutos (IIBB)
+          <span className="font-bold text-emerald-300 truncate block" title={calculatedData.classification.categoryName}>
+            {calculatedData.classification.categoryCode} ({calculatedData.classification.powerRangeLabel})
           </span>
-          <span className="text-[10px] text-slate-400 block">Inyección de excedentes</span>
+          <span className="text-[10px] text-slate-400 block">Acople AC: {formatNumber(calculatedData.acCoupleKw, 1)} kW</span>
         </div>
       </div>
 
@@ -372,23 +407,23 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               <MetricHelpTooltip
                 metricId="specific_yield"
                 metricTitle="Potencia Fotovoltaica Sugerida"
-                currentValue={`${lastCalculatedData?.recKwp || 50} kWp DC`}
+                currentValue={`${calculatedData.recKwp} kWp DC`}
                 onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'specific_yield',
-                    value: `${lastCalculatedData?.recKwp || 50} kWp`,
+                    value: `${calculatedData.recKwp} kWp`,
                   })
                 }
               />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-amber-400">
-                {lastCalculatedData?.recKwp || 50}
+                {calculatedData.recKwp}
               </span>
               <span className="text-xs text-amber-300/80 font-bold">kWp DC</span>
             </div>
             <div className="mt-2 text-[11px] text-slate-400">
-              Ocupa {lastCalculatedData?.areaOccupied || 300} m² ({lastCalculatedData?.areaPercent || 75}% del techo)
+              Ocupa {calculatedData.areaOccupied} m² ({calculatedData.areaPercent}% del techo)
             </div>
           </div>
 
@@ -402,18 +437,18 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               <MetricHelpTooltip
                 metricId="capex"
                 metricTitle="Inversión Inicial Llave en Mano (CAPEX)"
-                currentValue={`USD ${formatNumber(lastCalculatedData?.capex || 42000)}`}
+                currentValue={`USD ${formatNumber(calculatedData.capex)}`}
                 onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'capex',
-                    value: `USD ${formatNumber(lastCalculatedData?.capex || 42000)}`,
+                    value: `USD ${formatNumber(calculatedData.capex)}`,
                   })
                 }
               />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-yellow-300">
-                ${formatNumber(lastCalculatedData?.capex || 42000)}
+                ${formatNumber(calculatedData.capex)}
               </span>
               <span className="text-xs text-yellow-400/80 font-bold">USD</span>
             </div>
@@ -432,23 +467,23 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               <MetricHelpTooltip
                 metricId="annual_savings"
                 metricTitle="Ahorro Anual en Factura Eléctrica"
-                currentValue={`USD ${formatNumber(lastCalculatedData?.savings || 7200)} / año`}
+                currentValue={`USD ${formatNumber(calculatedData.savings)} / año`}
                 onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'annual_savings',
-                    value: `USD ${formatNumber(lastCalculatedData?.savings || 7200)} / año`,
+                    value: `USD ${formatNumber(calculatedData.savings)} / año`,
                   })
                 }
               />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-emerald-400">
-                ${formatNumber(lastCalculatedData?.savings || 7200)}
+                ${formatNumber(calculatedData.savings)}
               </span>
               <span className="text-xs text-emerald-300/80 font-bold">USD/año</span>
             </div>
             <div className="mt-2 text-[11px] text-slate-400">
-              Cubre aprox. {lastCalculatedData?.coverage || 65}% de tu factura de {activeProvince.utility}
+              Cubre aprox. {calculatedData.coverage}% de tu factura de {activeProvince.utility}
             </div>
           </div>
 
@@ -462,18 +497,18 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               <MetricHelpTooltip
                 metricId="payback"
                 metricTitle="Período de Retorno de la Inversión (Payback)"
-                currentValue={`${lastCalculatedData?.payback || '4,5'} años`}
+                currentValue={`${calculatedData.payback} años`}
                 onOpenFullModal={() =>
                   setActiveMetricModal({
                     id: 'payback',
-                    value: `${lastCalculatedData?.payback || '4,5'} años`,
+                    value: `${calculatedData.payback} años`,
                   })
                 }
               />
             </div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-cyan-400">
-                {lastCalculatedData?.payback || '4,5'}
+                {calculatedData.payback}
               </span>
               <span className="text-xs text-cyan-300/80 font-bold">años</span>
             </div>
@@ -636,6 +671,42 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Modality (Res. SE 287/2025) & Contracted Power Coupling Validation */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <div>
+              <label className="text-xs font-semibold text-slate-400 block mb-1">
+                Modalidad Usuario-Generador (Res. SE 287/2025)
+              </label>
+              <select
+                value={modality}
+                onChange={(e) => setModality(e.target.value as DistributedGenModality)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+              >
+                <option value="individual">Individual (1 punto de suministro)</option>
+                <option value="comunitario">Comunitario (Consorcios / PyMEs asociadas)</option>
+                <option value="comunitario_virtual">Comunitario Virtual (Medición inteligente en tiempo real)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-400 flex items-center justify-between mb-1">
+                <span>Potencia Contratada en Tarifa (kW)</span>
+                <span className="text-[10px] text-amber-400 font-mono">
+                  Acople AC: {formatNumber(calculatedData.acCoupleKw, 1)} kW
+                </span>
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={50000}
+                step={5}
+                value={contractedPowerKw}
+                onChange={(e) => setContractedPowerKw(Math.max(1, Number(e.target.value) || 1))}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Right: Quick Action & Live KPIs summary */}
@@ -654,34 +725,32 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
             </div>
           </div>
 
-          {lastCalculatedData && (
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Potencia Sugerida</span>
-                <span className="text-base font-black text-amber-400">
-                  {lastCalculatedData.recKwp} kWp
-                </span>
-              </div>
-              <div className="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Amortización (Payback)</span>
-                <span className="text-base font-black text-emerald-400">
-                  {lastCalculatedData.payback} años
-                </span>
-              </div>
-              <div className="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Ahorro Anual</span>
-                <span className="text-sm font-black text-slate-200">
-                  USD {formatNumber(lastCalculatedData.savings)}
-                </span>
-              </div>
-              <div className="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Cobertura Demanda</span>
-                <span className="text-sm font-black text-cyan-400">
-                  {lastCalculatedData.coverage}%
-                </span>
-              </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
+              <span className="text-[10px] text-slate-400 block">Potencia Sugerida</span>
+              <span className="text-base font-black text-amber-400">
+                {calculatedData.recKwp} kWp
+              </span>
             </div>
-          )}
+            <div className="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
+              <span className="text-[10px] text-slate-400 block">Amortización (Payback)</span>
+              <span className="text-base font-black text-emerald-400">
+                {calculatedData.payback} años
+              </span>
+            </div>
+            <div className="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
+              <span className="text-[10px] text-slate-400 block">Ahorro Anual</span>
+              <span className="text-sm font-black text-slate-200">
+                USD {formatNumber(calculatedData.savings)}
+              </span>
+            </div>
+            <div className="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
+              <span className="text-[10px] text-slate-400 block">Cobertura Demanda</span>
+              <span className="text-sm font-black text-cyan-400">
+                {calculatedData.coverage}%
+              </span>
+            </div>
+          </div>
 
           <button
             onClick={() => executeStudy()}
@@ -700,6 +769,53 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
               </>
             )}
           </button>
+        </div>
+      </div>
+
+      {/* Live Regulatory Classification & Technical Standards Box (2025/2026) */}
+      <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+          <div className="flex items-center gap-2 font-bold text-white">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Encuadre Regulatorio y Requisitos Técnicos Vigentes (Argentina 2025/2026)</span>
+          </div>
+          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold text-[11px]">
+            {calculatedData.classification.categoryName} • {calculatedData.classification.powerRangeLabel}
+          </span>
+        </div>
+
+        {calculatedData.classification.exceedsContractedPowerWarning && (
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-200 flex items-start gap-2 text-[11px]">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <span>{calculatedData.classification.exceedsContractedPowerWarning}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+            <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+              Marco Aplicable & Facturación Neta
+            </div>
+            <p className="text-slate-200 font-semibold">{calculatedData.classification.applicableFramework}</p>
+            <p className="text-slate-400 text-[11px] leading-relaxed">{calculatedData.classification.compensationScheme}</p>
+            <p className="text-cyan-300 text-[11px] font-medium pt-0.5">
+              Telemetría: {calculatedData.classification.telemetryRequirementText}
+            </p>
+          </div>
+
+          <div className="space-y-1.5 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+            <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+              Normas Técnicas y Notas Fiscales
+            </div>
+            <ul className="space-y-1 text-[11px] text-slate-300 list-disc list-inside">
+              {calculatedData.classification.technicalStandards.map((std, i) => (
+                <li key={i}>{std}</li>
+              ))}
+              {calculatedData.classification.fiscalAndMarketNotes.slice(0, 2).map((note, i) => (
+                <li key={`f-${i}`} className="text-slate-400">{note}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -873,6 +989,69 @@ export const SolarCalcArgentina: React.FC<SolarCalcArgentinaProps> = ({
           </div>
         </div>
       )}
+
+      {/* Executive Export Panel synced to active PyME / Industrial Net Billing study */}
+      {(() => {
+        const effectiveConfig: SolarSystemConfig = config
+          ? { ...config, systemCapacityMw: Math.max(0.01, calculatedData.recKwp / 1000) }
+          : {
+              systemCapacityMw: Math.max(0.01, calculatedData.recKwp / 1000),
+              technology: 'monocrystalline_fixed',
+              panelEfficiencyPercent: 22.0,
+              tiltAngleDegrees: activeProvince.optimalTiltDegrees,
+              azimuthDegrees: 0,
+              inverterEfficiencyPercent: 98.2,
+              dcAcRatio: 1.25,
+              groundHectares: (calculatedData.recKwp * 6) / 10000,
+              electricityPriceUsdMwh: Math.round(activeProvince.industrialTariffUsdKwh * 1000),
+              capexPerWpUsd: 0.85,
+              moduleWattageWp: 585,
+              discountRatePercent: 7.5,
+              annualDegradationPercent: 0.45,
+            };
+
+        const effectiveProjections: EnergyProjections =
+          projections ||
+          calculateSolarProjections(currentLocation.lat, currentLocation.lng, effectiveConfig, {
+            temperature: 22,
+            cloudCover: 15,
+            dni: 750,
+            ghi: 850,
+            dailyGhiKwh: 5.5,
+          });
+
+        return (
+          <ExecutiveExportPanel
+            location={{ ...currentLocation, name: locationName }}
+            config={effectiveConfig}
+            projections={effectiveProjections}
+            defaultModality={modality}
+            defaultContractedPowerKw={contractedPowerKw}
+            aiAuditReport={studyResult}
+            solarCalcOverride={{
+              province: activeProvince,
+              roofAreaM2,
+              monthlyConsumptionKwh,
+              recommendedKwp: calculatedData.recKwp,
+              acCoupleKw: calculatedData.acCoupleKw,
+              annualGenKwh: calculatedData.annualGen,
+              capexUsd: calculatedData.capex,
+              annualSavingsUsd: calculatedData.savings,
+              paybackYears: calculatedData.payback,
+              coveragePercent: calculatedData.coverage,
+              includeBess,
+              roofType,
+            }}
+            compact
+          />
+        );
+      })()}
+
+      {/* Mandatory Regulatory Validity Banner */}
+      <div className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2 leading-relaxed">
+        <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <span>{ARGENTINA_REGULATORY_DISCLAIMER}</span>
+      </div>
 
       {/* Metric Explanation Modal */}
       <MetricExplanationModal

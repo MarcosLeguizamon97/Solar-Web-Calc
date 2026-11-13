@@ -86,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 hidden sm:block">
-                Ingeniería fotovoltaica, indicadores IEC y marco Ley 27.424
+                Ingeniería fotovoltaica, IEC 61724 y marco Ley 27.424 • Res. SE 287/2025 &amp; 400/2025
               </p>
             </div>
           </button>

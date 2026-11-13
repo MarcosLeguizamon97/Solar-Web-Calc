@@ -21,6 +21,11 @@ import {
 import { LocationCoords, EnergyProjections, SolarSystemConfig } from '../types';
 import { AppViewMode } from './MobileNavigation';
 import { formatNumber, formatCoord } from '../utils/formatters';
+import {
+  ARGENTINA_REGULATORY_DISCLAIMER,
+  classifyArgentinaSolarProject,
+} from '../utils/argentinaSolarFramework';
+import { ExecutiveExportPanel } from './ExecutiveExportPanel';
 
 interface LandingDashboardProps {
   location: LocationCoords;
@@ -55,7 +60,7 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
         </h1>
 
         <p className="text-slate-300 text-xs sm:text-base leading-relaxed max-w-2xl mx-auto text-balance font-normal">
-          <strong className="text-amber-400 font-semibold">Heliosite</strong> es una plataforma profesional para proyectar en segundos el rendimiento energético, inversión inicial (CAPEX), ahorro en factura y viabilidad regulatoria (Ley Nacional 27.424 y distribuidoras provinciales) de cualquier instalación solar.
+          <strong className="text-amber-400 font-semibold">Heliosite</strong> es una plataforma profesional para proyectar en segundos el rendimiento energético, inversión inicial (CAPEX), ahorro en factura y viabilidad regulatoria bajo <strong className="text-slate-100 font-semibold">Ley 27.424 (Res. SE 287/2025)</strong>, <strong className="text-slate-100 font-semibold">Ley 27.191 / 28.282</strong> y <strong className="text-slate-100 font-semibold">Res. SE 400/2025 (MEM / MATER)</strong>.
         </p>
 
         {/* Current Active Location Pill with Clear Touch Feedback */}
@@ -144,6 +149,22 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
                 })}
               </div>
             </div>
+
+            {/* Dynamic Regulatory Category Pill (Res. SE 287/2025 & Res. SE 400/2025) */}
+            {(() => {
+              const acKw = (config.systemCapacityMw * 1000) / (config.dcAcRatio || 1.25);
+              const reg = classifyArgentinaSolarProject(acKw, config.systemCapacityMw * 1000);
+              return (
+                <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                  <span className="text-slate-400">
+                    Encuadre vigente ({formatNumber(Math.round(acKw))} kW AC):
+                  </span>
+                  <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold">
+                    {reg.categoryName} • {reg.categoryCode === 'MATER' ? 'MEM / MATER' : 'Ley 27.424'}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </section>
@@ -367,6 +388,19 @@ export const LandingDashboard: React.FC<LandingDashboardProps> = ({
             </div>
           </div>
         </div>
+      </section>
+
+      {/* 4. Executive Report Export Panel (PDF & Google Docs / Word) */}
+      <ExecutiveExportPanel
+        location={location}
+        config={config}
+        projections={projections}
+      />
+
+      {/* 5. Regulatory Validity Banner (Res. SE 287/2025 & Res. SE 400/2025) */}
+      <section className="p-3.5 sm:p-4 rounded-2xl bg-slate-900/70 border border-slate-800/90 text-[11px] text-slate-400 flex items-start gap-2.5 leading-relaxed">
+        <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+        <span>{ARGENTINA_REGULATORY_DISCLAIMER}</span>
       </section>
     </div>
   );

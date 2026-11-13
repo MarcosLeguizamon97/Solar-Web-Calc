@@ -25,6 +25,8 @@ import { EnergyProjections, SolarSystemConfig, LocationCoords } from '../types';
 import { MetricExplanationModal } from './MetricExplanationModal';
 import { MetricHelpTooltip } from './MetricHelpTooltip';
 import { formatNumber, formatPercent, formatCurrency } from '../utils/formatters';
+import { ARGENTINA_REGULATORY_DISCLAIMER, classifyArgentinaSolarProject } from '../utils/argentinaSolarFramework';
+import { ExecutiveExportPanel } from './ExecutiveExportPanel';
 
 interface ProfessionalSolarMetricsProps {
   projections: EnergyProjections;
@@ -107,6 +109,7 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
   };
 
   const currentBenchmark = benchmarkSites[selectedBenchmark] || benchmarkSites.san_juan;
+  const regulatoryClass = classifyArgentinaSolarProject(projections.acCapacityKw, projections.dcCapacityKwp);
 
   const kpiTabs: { id: TabMode; label: string; description: string; icon: React.ReactNode }[] = [
     {
@@ -443,12 +446,20 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
 
           {/* Executive Solar Summary Box */}
           <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl text-xs space-y-2 text-slate-300">
-            <div className="flex items-center gap-2 font-bold text-white text-sm">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Diagnóstico de Bancabilidad y Viabilidad de Ingeniería</span>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 font-bold text-white text-sm">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Diagnóstico de Bancabilidad y Viabilidad de Ingeniería</span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold text-[10px]">
+                {regulatoryClass.categoryCode} • {regulatoryClass.powerRangeLabel}
+              </span>
             </div>
             <p className="leading-relaxed text-slate-400">
-              Con un <strong>Rendimiento Específico de {formatNumber(projections.specificYieldKwhKwp)} kWh/kWp/año</strong> y un <strong>Performance Ratio del {formatPercent(projections.performanceRatio)}</strong>, el emplazamiento califica como <strong>{projections.viabilityGrade}</strong> para financiamiento estructurado de proyectos (Project Finance). La planta generará en su primer año <strong>{formatNumber(projections.annualGenerationMwh)} MWh</strong> y un acumulado de <strong>{formatNumber(projections.lifetimeGenerationMwh)} MWh</strong> a lo largo de 25 años considerando una tasa de degradación de {formatPercent(config.annualDegradationPercent || 0.45, 2)}/año.
+              Con un <strong>Rendimiento Específico de {formatNumber(projections.specificYieldKwhKwp)} kWh/kWp/año</strong> y un <strong>Performance Ratio del {formatPercent(projections.performanceRatio)}</strong>, el emplazamiento califica como <strong>{projections.viabilityGrade}</strong> para financiamiento estructurado (Project Finance). La planta generará <strong>{formatNumber(projections.annualGenerationMwh)} MWh</strong> el primer año y <strong>{formatNumber(projections.lifetimeGenerationMwh)} MWh</strong> acumulados en 25 años ({formatPercent(config.annualDegradationPercent || 0.45, 2)}/año de degradación).
+            </p>
+            <p className="leading-relaxed text-slate-300 pt-1 border-t border-slate-800/80">
+              <strong className="text-amber-300">Encuadre Regulatorio Argentina (2025/2026):</strong> {regulatoryClass.categoryName} bajo <strong>{regulatoryClass.applicableFramework}</strong>. {regulatoryClass.telemetryRequirementText}
             </p>
           </div>
         </div>
@@ -719,6 +730,20 @@ export const ProfessionalSolarMetrics: React.FC<ProfessionalSolarMetricsProps> =
           </div>
         </div>
       )}
+
+      {/* Executive Export Panel (PDF & Google Docs / Word) */}
+      <ExecutiveExportPanel
+        location={location}
+        config={config}
+        projections={projections}
+        compact
+      />
+
+      {/* Mandatory Regulatory Validity Banner */}
+      <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2 leading-relaxed">
+        <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <span>{ARGENTINA_REGULATORY_DISCLAIMER}</span>
+      </div>
 
       {/* Metric Explanation Modal / Dialog */}
       <MetricExplanationModal

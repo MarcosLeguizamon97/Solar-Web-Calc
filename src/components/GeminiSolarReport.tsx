@@ -1,8 +1,9 @@
 import React from 'react';
-import { Bot, MapPin, ExternalLink, RefreshCw, AlertCircle, CheckCircle, Shield, Building2, Zap } from 'lucide-react';
+import { Bot, MapPin, ExternalLink, RefreshCw, AlertCircle, CheckCircle, Shield, Building2, Zap, Info } from 'lucide-react';
 import { GeminiAnalysisState, LocationCoords, SolarSystemConfig } from '../types';
 import { WhatsAppIcon, formatReportForWhatsApp } from './TechnicalEnergyAnalysis';
 import { formatNumber, formatCoord, formatCapacityMw, normalizeReportNumbers } from '../utils/formatters';
+import { ARGENTINA_REGULATORY_DISCLAIMER } from '../utils/argentinaSolarFramework';
 
 interface GeminiSolarReportProps {
   analysisState: GeminiAnalysisState;
@@ -221,6 +222,12 @@ export const GeminiSolarReport: React.FC<GeminiSolarReportProps> = ({
           )}
         </div>
       )}
+
+      {/* Mandatory Regulatory Validity Banner */}
+      <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2 leading-relaxed">
+        <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <span>{ARGENTINA_REGULATORY_DISCLAIMER}</span>
+      </div>
     </div>
   );
 };

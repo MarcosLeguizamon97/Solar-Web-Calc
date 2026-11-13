@@ -1,8 +1,9 @@
 import React from 'react';
-import { Award, Zap, Sliders, ChevronDown, ChevronUp, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Award, Zap, Sliders, ChevronDown, ChevronUp, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import { EnergyProjections, SolarSystemConfig } from '../types';
 import { calculateOptimalTilt } from '../utils/solarCalculations';
 import { formatNumber, formatPercent } from '../utils/formatters';
+import { ARGENTINA_REGULATORY_DISCLAIMER, classifyArgentinaSolarProject } from '../utils/argentinaSolarFramework';
 
 interface ViabilityScorecardProps {
   projections: EnergyProjections;
@@ -25,6 +26,7 @@ export const ViabilityScorecard: React.FC<ViabilityScorecardProps> = ({
 
   // Suggested area for this capacity: ~1.6 ha per MWp
   const suggestedHectares = Math.round(config.systemCapacityMw * 1.6 * 10) / 10;
+  const regulatoryClass = classifyArgentinaSolarProject(projections.acCapacityKw, projections.dcCapacityKwp);
 
   // Grade color
   const getGradeColor = (grade: string) => {
@@ -95,13 +97,16 @@ export const ViabilityScorecard: React.FC<ViabilityScorecardProps> = ({
                 Índice de Viabilidad Fotovoltaica
               </h3>
             </div>
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1 flex flex-wrap items-center gap-2">
               <span
                 className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getGradeColor(
                   projections.viabilityGrade
                 )}`}
               >
                 {projections.viabilityGrade}
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                {regulatoryClass.categoryCode} ({regulatoryClass.powerRangeLabel})
               </span>
               <span className="text-xs text-slate-400">
                 {projections.viabilityScore >= 80
@@ -361,6 +366,12 @@ export const ViabilityScorecard: React.FC<ViabilityScorecardProps> = ({
             Recuperación de inversión inicial
           </div>
         </div>
+      </div>
+
+      {/* Mandatory Regulatory Validity Banner */}
+      <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2 leading-relaxed">
+        <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <span>{ARGENTINA_REGULATORY_DISCLAIMER}</span>
       </div>
     </div>
   );

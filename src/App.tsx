@@ -29,6 +29,7 @@ import {
   calculateSolarProjections,
 } from './utils/solarCalculations';
 import { formatNumber, formatCoord } from './utils/formatters';
+import { ARGENTINA_REGULATORY_DISCLAIMER } from './utils/argentinaSolarFramework';
 import { Share2, Sparkles, MapPin, Zap, ExternalLink, Activity } from 'lucide-react';
 
 export default function App() {
@@ -324,6 +325,8 @@ export default function App() {
           <div className="space-y-6 animate-in fade-in duration-300">
             <SolarCalcArgentina
               currentLocation={location}
+              config={config}
+              projections={projections}
               onLocationChange={(loc) => {
                 setLocation(loc);
                 setConfig((prev) => ({
@@ -511,17 +514,23 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950/90 py-6 px-4 sm:px-6 text-xs text-slate-500 mb-16 hidden md:block">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-slate-300">HelioSite Pro</span>
-            <span>•</span>
-            <span>Plataforma Geoespacial de Evaluación Fotovoltaica</span>
+        <div className="max-w-7xl mx-auto space-y-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-slate-300">HelioSite Pro</span>
+              <span>•</span>
+              <span>Plataforma Geoespacial de Evaluación Fotovoltaica</span>
+            </div>
+
+            <div className="flex items-center gap-4 text-slate-400">
+              <span>Datos climáticos: Open-Meteo Solar &amp; Satellite</span>
+              <span>•</span>
+              <span>IA: Gemini 2.5 Flash con Google Maps Grounding</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-400">
-            <span>Datos climáticos: Open-Meteo Solar & Satellite</span>
-            <span>•</span>
-            <span>IA: Gemini 2.5 Flash con Google Maps Grounding</span>
+          <div className="pt-2 border-t border-slate-800/60 text-[11px] text-slate-400 text-center">
+            {ARGENTINA_REGULATORY_DISCLAIMER}
           </div>
         </div>
       </footer>

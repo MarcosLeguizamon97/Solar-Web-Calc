@@ -1,3 +1,165 @@
+export const ARGENTINA_REGULATORY_DISCLAIMER =
+  'Cálculos y encuadre regulatorio actualizados conforme a la normativa nacional vigente de la Secretaría de Energía de la Nación (incluyendo Res. SE 287/2025 y Res. SE 400/2025). Sujeto a adhesión y cuadros tarifarios de cada jurisdicción provincial.';
+
+export type UserGeneratorCategoryCode = 'UGpe' | 'UGme' | 'UGma' | 'MATER';
+export type DistributedGenModality = 'individual' | 'comunitario' | 'comunitario_virtual';
+
+export interface RegulatoryClassification {
+  categoryCode: UserGeneratorCategoryCode;
+  categoryName: string;
+  powerRangeLabel: string;
+  segmentLabel: string;
+  applicableFramework: string;
+  compensationScheme: string;
+  requiresTelemetry: boolean;
+  telemetryRequirementText: string;
+  technicalStandards: string[];
+  fiscalAndMarketNotes: string[];
+  exceedsDistributedLimit12Mw: boolean;
+  exceedsContractedPowerWarning?: string;
+}
+
+/**
+ * Classifies an Argentine solar installation according to current 2025/2026 national rules:
+ * - Ley 27.424 & Res. SE 287/2025 (replaces Ch. 2 Annex Res. 314/2018, repeals Res. 235/2024):
+ *   UGpe <= 3 kW | 3 kW < UGme <= 300 kW | 300 kW < UGma <= 12 MW
+ * - Ley 27.191 (extended by Ley 28.282 until 2045) & Res. SE 400/2025 (MEM / MATER / GUDI >= 300 kW)
+ */
+export function classifyArgentinaSolarProject(
+  acPowerKw: number,
+  dcPowerKwp?: number,
+  modality: DistributedGenModality = 'individual',
+  contractedPowerKw?: number
+): RegulatoryClassification {
+  const safeAcKw = Math.max(0.1, acPowerKw);
+  const effectiveDcKwp = dcPowerKwp ?? safeAcKw * 1.25;
+  const requiresTelemetry = safeAcKw > 10 || modality === 'comunitario_virtual';
+
+  const modalityNote =
+    modality === 'comunitario_virtual'
+      ? 'Modalidad Comunitaria Virtual (Res. SE 287/2025): requiere medidores inteligentes con telemetría en tiempo real para compensación remota entre suministros asociados.'
+      : modality === 'comunitario'
+      ? 'Modalidad Comunitaria (Res. SE 287/2025): permite agrupar dos o más suministros del mismo distribuidor hasta la suma de sus potencias contratadas.'
+      : 'Modalidad Individual (Res. SE 287/2025): autoconsumo e inyección de excedentes sobre un único punto de suministro.';
+
+  const exceedsContractedPowerWarning =
+    contractedPowerKw !== undefined && contractedPowerKw > 0 && safeAcKw > contractedPowerKw
+      ? `Atención (Res. SE 287/2025): La potencia de acople AC (${safeAcKw.toFixed(1)} kW) supera la potencia contratada declarada (${contractedPowerKw.toFixed(1)} kW). Requiere autorización especial previa del Ente Regulador Jurisdiccional o ampliación de demanda contratada.`
+      : undefined;
+
+  if (safeAcKw <= 3) {
+    return {
+      categoryCode: 'UGpe',
+      categoryName: 'Usuario-Generador Pequeño (UGpe)',
+      powerRangeLabel: 'Hasta 3 kW AC',
+      segmentLabel: 'Residencial / Micro-Comercial',
+      applicableFramework: 'Ley Nacional 27.424 • Res. SE 287/2025 (Cap. 2 Anexo Res. 314/2018)',
+      compensationScheme:
+        'Facturación Neta (Net Billing): crédito por excedentes inyectados sin cargos de respaldo, peajes ni impuestos adicionales sobre la inyección.',
+      requiresTelemetry: modality === 'comunitario_virtual',
+      telemetryRequirementText:
+        modality === 'comunitario_virtual'
+          ? 'Telemetría inteligente en tiempo real obligatoria por modalidad Comunitaria Virtual.'
+          : 'Monitoreo local/remoto estándar vía portal del inversor + Medidor Bidireccional homologado.',
+      technicalStandards: [
+        'Reglamento AEA 90364-7-712 (Sistemas Fotovoltaicos) y AEA 90364-8-2',
+        'Inversor certificado IRAM / IEC con protección anti-isla automática',
+        'Medidor bidireccional de energía demandada e inyectada',
+      ],
+      fiscalAndMarketNotes: [
+        modalityNote,
+        'Trámite simplificado de factibilidad (Res. SE 287/2025 prohíbe cobrar estudios técnicos previos o cargos extra).',
+      ],
+      exceedsDistributedLimit12Mw: false,
+      exceedsContractedPowerWarning,
+    };
+  }
+
+  if (safeAcKw <= 300) {
+    return {
+      categoryCode: 'UGme',
+      categoryName: 'Usuario-Generador Mediano (UGme)',
+      powerRangeLabel: 'Más de 3 kW y hasta 300 kW AC',
+      segmentLabel: 'Comercial / PyME Industrial',
+      applicableFramework: 'Ley Nacional 27.424 • Res. SE 287/2025 (Cap. 2 Anexo Res. 314/2018)',
+      compensationScheme:
+        'Facturación Neta (Net Billing): separación explícita de kWh demandados e inyectados antes de impuestos; prohibición de cargos extra de red o respaldo.',
+      requiresTelemetry,
+      telemetryRequirementText:
+        safeAcKw > 10
+          ? 'Obligatorio (> 10 kW): Telemetría y registro de perfiles de carga/inyección horaria exigido por distribuidoras y entes reguladores.'
+          : 'Monitoreo estándar de inversor + Medidor Bidireccional (telemetría obligatoria si supera 10 kW o es Comunitario Virtual).',
+      technicalStandards: [
+        'Reglamento AEA 90364-7-712 y proyecto eléctrico firmado por profesional matriculado',
+        'Inversor trifásico certificado IRAM / IEC con corte anti-isla y protecciones DC/AC Tipo II',
+        'Medidor bidireccional homologado' + (safeAcKw > 10 ? ' + Sistema de telemetría remota (> 10 kW)' : ''),
+      ],
+      fiscalAndMarketNotes: [
+        modalityNote,
+        'Potencia de acople a red computada como suma de potencias AC de inversores (hasta la potencia contratada).',
+        'Exenciones provinciales de Ingresos Brutos (IIBB) / Sellos sobre inyección según adhesión local.',
+      ],
+      exceedsDistributedLimit12Mw: false,
+      exceedsContractedPowerWarning,
+    };
+  }
+
+  if (safeAcKw <= 12000) {
+    return {
+      categoryCode: 'UGma',
+      categoryName: 'Usuario-Generador Mayor (UGma)',
+      powerRangeLabel: 'Más de 300 kW y hasta 12 MW AC',
+      segmentLabel: 'Gran Industria / GUDI / Parque Comunitario',
+      applicableFramework:
+        'Ley 27.424 • Res. SE 287/2025 (Tope ampliado a 12 MW) • Res. SE 400/2025 (GUDI / Opción MATER) • Ley 27.191 / 28.282',
+      compensationScheme:
+        'Facturación Neta en Generación Distribuida (hasta 12 MW) u opción de contratación directa MATER bajo Normalización del MEM (Res. SE 400/2025).',
+      requiresTelemetry: true,
+      telemetryRequirementText:
+        'Obligatorio: Telemetría SCADA / Medición inteligente en tiempo real (curvas cuarto-horarias) e integración con centro de control de la distribuidora.',
+      technicalStandards: [
+        'Reglamento AEA 90364-7-712, Media Tensión y protecciones de interconexión (relés ANSI/IEC)',
+        'Inversores certificados IRAM / IEC con soporte de red, control de potencia reactiva y anti-isla',
+        'Medidor bidireccional clase 0.2S/0.5S con telemetría remota obligatoria (> 10 kW)',
+        'Estudio de Capacidad de Evacuación / Punto de Acceso y Conexión (PAC) en Media o Alta Tensión',
+      ],
+      fiscalAndMarketNotes: [
+        modalityNote,
+        'Demanda >= 300 kW clasificada como GUDI bajo Res. SE 400/2025 (costos marginales reales y habilitación de contratos bilaterales MAT/MATER).',
+        'Cumplimiento de meta mínima del 20% de abastecimiento renovable para Grandes Usuarios (Ley 27.191) y estabilidad fiscal prorrogada hasta 2045 (Ley 28.282).',
+        'Certificado de Crédito Fiscal por componente nacional (30%–60% integración local -> 20% crédito fiscal aplicable a impuestos nacionales, sujeto a cupo vigente).',
+      ],
+      exceedsDistributedLimit12Mw: false,
+      exceedsContractedPowerWarning,
+    };
+  }
+
+  return {
+    categoryCode: 'MATER',
+    categoryName: 'Parque de Generación / Agente MEM - MATER',
+    powerRangeLabel: `Más de 12 MW AC (${(effectiveDcKwp / 1000).toFixed(1)} MWp DC)`,
+    segmentLabel: 'Utility-Scale / Mercado a Término (MATER)',
+    applicableFramework:
+      'Ley 27.191 (Prorrogada por Ley 28.282 hasta 2045) • Res. SE 400/2025 (Normalización del MEM y MAT/MATER)',
+    compensationScheme:
+      'Contratos privados de abastecimiento renovable a término (PPA MATER) y/o despacho en el Mercado Spot a Costo Marginal de Corto Plazo (Res. SE 400/2025).',
+    requiresTelemetry: true,
+    telemetryRequirementText:
+      'Obligatorio: Sistema de Medición Comercial (SMEC) de CAMMESA y telemetría SCADA en tiempo real (SOTR).',
+    technicalStandards: [
+      'Procedimientos Técnicos de CAMMESA (PT N° 1 y N° 4 - Acceso a Capacidad de Transporte SADI)',
+      'Estación Transformadora Elevadora AT/MAT, protecciones IEC y cumplimiento de Código de Red',
+      'Equipamiento certificado IEC / IRAM y telemetría SMEC/SCADA obligatoria',
+    ],
+    fiscalAndMarketNotes: [
+      'Supera el tope máximo de 12 MW de Generación Distribuida (Ley 27.424 / Res. SE 287/2025); se encuadra como Generador del MEM / MATER.',
+      'Res. SE 400/2025 habilita plena operatoria contractual privada MAT/MATER y señales de precios basadas en costos marginales reales.',
+      'Estabilidad fiscal garantizada hasta el 31/12/2045 (Ley 28.282) y potencial acceso a Certificado de Crédito Fiscal (20% sobre componente nacional 30%–60%).',
+    ],
+    exceedsDistributedLimit12Mw: true,
+  };
+}
+
 export interface ArgentinaProvinceInfo {
   id: string;
   name: string;
@@ -54,9 +216,9 @@ export const ARGENTINA_PROVINCES: Record<string, ArgentinaProvinceInfo> = {
     capital: 'Córdoba Capital',
     utility: 'EPEC',
     utilityFullName: 'Empresa Provincial de Energía de Córdoba',
-    regulatoryLaw: 'Ley Provincial 10.604 (Adhesión plena a Ley Nacional 27.424)',
+    regulatoryLaw: 'Ley Provincial 10.604 • Res. SPE 9/2026 (GD Comunitaria y Ley 27.424 / Res. SE 287/2025)',
     adheredToNationalLaw27424: true,
-    prosumerProgramName: 'Régimen de Usuario-Generador EPEC (Medidor Bidireccional)',
+    prosumerProgramName: 'Régimen de Usuario-Generador EPEC (Individual y Comunitario)',
     taxExemptions: 'Exención de Impuesto sobre los Ingresos Brutos y Sellos para generación distribuida renovable',
     avgSpecificYieldKwhKwp: 1680,
     avgAnnualGhiKwhM2: 1980,
@@ -79,9 +241,9 @@ export const ARGENTINA_PROVINCES: Record<string, ArgentinaProvinceInfo> = {
     capital: 'La Plata',
     utility: 'EDEN / EDES / EDEA / EDELAP',
     utilityFullName: 'Distribuidoras Provinciales (EDEN, EDES, EDEA, EDELAP) y Cooperativas Eléctricas',
-    regulatoryLaw: 'Ley Provincial 15.325 (Marco Regulatorio de Generación Distribuida PBA)',
+    regulatoryLaw: 'Ley Provincial 15.325 • Res. 17/2026 (GD Comunitaria) y Res. 437/2026 (BESS)',
     adheredToNationalLaw27424: true,
-    prosumerProgramName: 'Régimen de Fomento a la Generación Distribuida PBA (PROINGED)',
+    prosumerProgramName: 'Régimen de Generación Distribuida PBA (PROINGED / Comunitaria Virtual)',
     taxExemptions: 'Exención de Impuesto Inmobiliario proporcional y alícuota 0% en IIBB sobre excedentes inyectados',
     avgSpecificYieldKwhKwp: 1460,
     avgAnnualGhiKwhM2: 1720,
@@ -104,10 +266,10 @@ export const ARGENTINA_PROVINCES: Record<string, ArgentinaProvinceInfo> = {
     capital: 'Ciudad Autónoma de Buenos Aires',
     utility: 'Edenor / Edesur',
     utilityFullName: 'Empresas Distribuidoras del Área Metropolitana (Edenor / Edesur bajo órbita ENRE)',
-    regulatoryLaw: 'Ley Nacional 27.424 (Régimen Nacional de Generación Distribuida)',
+    regulatoryLaw: 'Ley Nacional 27.424 • Res. SE 287/2025 (ENRE • Hasta 12 MW UGma)',
     adheredToNationalLaw27424: true,
-    prosumerProgramName: 'Usuario-Generador ENRE / Certificado de Inyección a Red',
-    taxExemptions: 'Beneficios impositivos nacionales de la Ley 27.424 (no computa ganancia gravada por inyección)',
+    prosumerProgramName: 'Usuario-Generador ENRE (Net Billing / TAD Nacional)',
+    taxExemptions: 'Beneficios impositivos nacionales de la Ley 27.424 (sin cargos extra ni impuestos sobre inyección)',
     avgSpecificYieldKwhKwp: 1420,
     avgAnnualGhiKwhM2: 1680,
     optimalTiltDegrees: 32,

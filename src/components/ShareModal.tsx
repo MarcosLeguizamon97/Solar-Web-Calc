@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Share2, Copy, Check, ExternalLink, Printer, MessageCircle, Twitter, Linkedin, Mail, X } from 'lucide-react';
+import { Share2, Copy, Check, ExternalLink, Printer, MessageCircle, Twitter, Linkedin, Mail, X, FileDown, FileText } from 'lucide-react';
 import { EnergyProjections, LocationCoords, SolarSystemConfig } from '../types';
+import { ARGENTINA_REGULATORY_DISCLAIMER, classifyArgentinaSolarProject } from '../utils/argentinaSolarFramework';
+import { exportExecutiveDocx, exportExecutivePdf } from '../utils/executiveReportGenerator';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -18,6 +20,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   projections,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [exportingType, setExportingType] = useState<'pdf' | 'docx' | null>(null);
 
   if (!isOpen) return null;
 
@@ -47,7 +50,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const shareText = `☀️ Análisis de Viabilidad Planta Solar en ${location.name} (${config.systemCapacityMw} MWp): ${projections.annualGenerationMwh.toLocaleString()} MWh/año proyectados. Revisa el informe interactivo:`;
+  const regClass = classifyArgentinaSolarProject(projections.acCapacityKw, projections.dcCapacityKwp);
+  const shareText = `☀️ Análisis de Viabilidad Planta Solar en ${location.name} (${config.systemCapacityMw} MWp • ${regClass.categoryCode}): ${projections.annualGenerationMwh.toLocaleString()} MWh/año proyectados. ${ARGENTINA_REGULATORY_DISCLAIMER} Informe interactivo:`;
 
   const shareLinks = {
     whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(
@@ -178,7 +182,75 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           </div>
         </div>
 
-        {/* Print / PDF Option */}
+        {/* Regulatory Note for Exported / Printed Views */}
+        <p className="text-[10px] text-slate-400 leading-relaxed bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+          {ARGENTINA_REGULATORY_DISCLAIMER}
+        </p>
+
+        {/* Executive Export Actions (PDF & Google Docs / Word) */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            type="button"
+            disabled={exportingType !== null}
+            onClick={async () => {
+              setExportingType('pdf');
+              try {
+                await exportExecutivePdf({
+                  location,
+                  config,
+                  projections,
+                  metadata: {
+                    projectName: `Parque Solar Fotovoltaico — ${location.name}`,
+                    evaluatorName: 'Dirección de Ingeniería Solar',
+                    investorEntity: 'Consorcio / Socios Inversores',
+                    participationVehicle: 'fideicomiso',
+                    equityFractionPercent: 25,
+                    futureExpansionMw: Math.max(1, Math.round(config.systemCapacityMw * 2 * 10) / 10),
+                    modality: 'individual',
+                  },
+                });
+              } finally {
+                setExportingType(null);
+              }
+            }}
+            className="px-3 py-2.5 rounded-xl bg-[#0F2744] hover:bg-[#173963] border border-sky-400/40 text-white text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+          >
+            <FileDown className="w-4 h-4 text-sky-300" />
+            <span>{exportingType === 'pdf' ? 'Generando PDF...' : 'PDF Ejecutivo'}</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={exportingType !== null}
+            onClick={async () => {
+              setExportingType('docx');
+              try {
+                await exportExecutiveDocx({
+                  location,
+                  config,
+                  projections,
+                  metadata: {
+                    projectName: `Parque Solar Fotovoltaico — ${location.name}`,
+                    evaluatorName: 'Dirección de Ingeniería Solar',
+                    investorEntity: 'Consorcio / Socios Inversores',
+                    participationVehicle: 'fideicomiso',
+                    equityFractionPercent: 25,
+                    futureExpansionMw: Math.max(1, Math.round(config.systemCapacityMw * 2 * 10) / 10),
+                    modality: 'individual',
+                  },
+                });
+              } finally {
+                setExportingType(null);
+              }
+            }}
+            className="px-3 py-2.5 rounded-xl bg-emerald-900/70 hover:bg-emerald-800/80 border border-emerald-400/40 text-white text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+          >
+            <FileText className="w-4 h-4 text-emerald-300" />
+            <span>{exportingType === 'docx' ? 'Generando DOCX...' : 'Google Docs / Word'}</span>
+          </button>
+        </div>
+
+        {/* Print / Close Option */}
         <div className="border-t border-slate-800 pt-3 flex items-center justify-between">
           <button
             onClick={() => {
@@ -187,7 +259,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition"
           >
             <Printer className="w-3.5 h-3.5 text-amber-400" />
-            <span>Imprimir / Guardar como PDF</span>
+            <span>Imprimir Pantalla</span>
           </button>
 
           <button

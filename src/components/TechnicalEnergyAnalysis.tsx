@@ -34,6 +34,8 @@ import {
 import { MetricHelpTooltip } from './MetricHelpTooltip';
 import { MetricExplanationModal } from './MetricExplanationModal';
 import { formatNumber, formatPercent, formatCurrency, formatCoord, normalizeReportNumbers } from '../utils/formatters';
+import { ARGENTINA_REGULATORY_DISCLAIMER, classifyArgentinaSolarProject } from '../utils/argentinaSolarFramework';
+import { ExecutiveExportPanel } from './ExecutiveExportPanel';
 
 interface TechnicalEnergyAnalysisProps {
   location: LocationCoords;
@@ -66,6 +68,10 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
   const isTracker = config.technology === 'monocrystalline_tracking' || config.technology === 'bifacial_tracking';
   const haRatio = isTracker ? 1.6 : 1.4;
   const currentRequiredHectares = formatNumber(Math.round(config.systemCapacityMw * haRatio * 10) / 10, 1);
+  const regulatoryClass = useMemo(
+    () => classifyArgentinaSolarProject(projections.acCapacityKw, projections.dcCapacityKwp),
+    [projections.acCapacityKw, projections.dcCapacityKwp]
+  );
 
   // Synchronize and dynamically replace any static capacity/hectares in the report text
   const processedReport = useMemo(() => {
@@ -297,7 +303,7 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
             </div>
 
             {/* Live Formula & Calculation Explanation */}
-            <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-300 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+            <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-300 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 gap-2">
               <div className="flex items-center gap-1.5">
                 <span className="text-amber-400 font-bold">Cálculo matemático:</span>
                 <span>
@@ -306,6 +312,20 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
               </div>
               <span className="text-slate-400 font-mono text-[10px]">
                 Ratio: ~{formatNumber(haRatio, 1)} ha/MWp ({isTracker ? 'seguidores a 1 eje' : 'estructura fija'})
+              </span>
+            </div>
+
+            {/* Live Regulatory Framing Badge */}
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800">
+              <div className="flex items-center gap-2 text-slate-300">
+                <span className="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold text-[10px]">
+                  {regulatoryClass.categoryCode}
+                </span>
+                <span className="font-semibold text-white">{regulatoryClass.categoryName}</span>
+                <span className="text-slate-400 hidden sm:inline">({regulatoryClass.powerRangeLabel})</span>
+              </div>
+              <span className="text-[10px] text-cyan-300 font-medium">
+                {regulatoryClass.applicableFramework}
               </span>
             </div>
           </div>
@@ -979,6 +999,21 @@ export const TechnicalEnergyAnalysis: React.FC<TechnicalEnergyAnalysisProps> = (
         </div>
       </section>
 
+      {/* Executive Report Export Panel */}
+      <ExecutiveExportPanel
+        location={location}
+        config={config}
+        projections={projections}
+        aiAuditReport={processedReport}
+        compact
+      />
+
+      {/* Regulatory Validity Notice */}
+      <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2.5 leading-relaxed">
+        <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <span>{ARGENTINA_REGULATORY_DISCLAIMER}</span>
+      </div>
+
       {/* Metric explanation modal */}
       <MetricExplanationModal
         metricId={activeMetricModal?.id || null}
@@ -1179,13 +1214,17 @@ export function formatReportForWhatsApp(
   const formattedKwp = formatNumber(Math.round(config.systemCapacityMw * 1000));
   const formattedHaRatio = formatNumber(haRatio, 1);
 
+  const acPowerKw = Math.round(((config.systemCapacityMw * 1000) / 1.25) * 10) / 10;
+  const regClass = classifyArgentinaSolarProject(acPowerKw, config.systemCapacityMw * 1000);
+
   // Header with key project specifications formatted for WhatsApp (strict Argentine format)
   const header = [
     `☀️ *HELIOSITE SOLAR - AUDITORÍA TÉCNICA DE EMPLAZAMIENTO*`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     `📍 *Emplazamiento:* ${location.name}`,
     `🌐 *Coordenadas:* ${cleanCoords}`,
-    `⚡ *Tamaño de Planta:* *${formattedCapacity} MWp* (${formattedKwp} kWp)`,
+    `⚡ *Tamaño de Planta:* *${formattedCapacity} MWp* (${formattedKwp} kWp DC / ~${formatNumber(acPowerKw, 1)} kW AC)`,
+    `🏛️ *Encuadre Normativo:* ${regClass.categoryName} (${regClass.powerRangeLabel})`,
     `📐 *Superficie Estimada:* *${requiredHectares} hectáreas* (~${formattedHaRatio} ha/MWp)`,
     `⚙️ *Tecnología:* ${techLabel}`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`,
@@ -1213,6 +1252,7 @@ export function formatReportForWhatsApp(
 
   const footer = [
     `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    `⚖️ _${ARGENTINA_REGULATORY_DISCLAIMER}_`,
     `📊 *Heliosite Solar Studio*`,
     `🔗 https://heliosite-solar.web.app`,
   ].join('\n');

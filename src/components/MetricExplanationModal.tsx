@@ -47,8 +47,8 @@ export const METRIC_EXPLANATIONS: Record<string, MetricDetail> = {
     interpretation:
       'Permite comparar directamente el costo de la energía solar propia contra la tarifa que factura la distribuidora eléctrica (EPE, EPEC, Edenor, etc.).',
     argentinaBenchmark:
-      'Para proyectos industriales On-Grid en Argentina, el LCOE ronda los USD 35 a 52 / MWh, muy inferior al costo de la tarifa industrial de red (USD 80 a 110 / MWh), garantizando un ahorro masivo.',
-    regulatoryOrStandard: 'Metodología NREL / IRENA Renewable Cost Analysis.',
+      'Para proyectos industriales On-Grid en Argentina, el LCOE ronda los USD 35 a 52 / MWh, muy inferior al costo de la tarifa industrial de red y a los costos marginales reales del MEM (Res. SE 400/2025), garantizando ahorro sostenido o contratos PPA competitivos en el MATER.',
+    regulatoryOrStandard: 'Metodología NREL / IRENA • Res. SE 400/2025 (Normalización del MEM / MATER).',
   },
   capacity_factor: {
     id: 'capacity_factor',
@@ -60,7 +60,7 @@ export const METRIC_EXPLANATIONS: Record<string, MetricDetail> = {
       'Representa la utilización efectiva de la capacidad de inyección eléctrica anual considerando la noche y las variaciones climáticas diurnas.',
     argentinaBenchmark:
       'En plantas fijas en la región Pampeana se ubica entre 17% y 20%. En plantas con seguidores solares a un eje en el NOA y Cuyo alcanza entre 26% y 31%.',
-    regulatoryOrStandard: 'CAMMESA / Secretaría de Energía de la Nación.',
+    regulatoryOrStandard: 'CAMMESA / Secretaría de Energía de la Nación (Res. SE 287/2025 y Res. SE 400/2025).',
   },
   payback: {
     id: 'payback',
@@ -71,8 +71,8 @@ export const METRIC_EXPLANATIONS: Record<string, MetricDetail> = {
     interpretation:
       'A partir del año de amortización, toda la energía generada durante los siguientes 20 a 25 años constituye ganancia neta directa para la PyME o propietario.',
     argentinaBenchmark:
-      'En Argentina el payback típico para industrias y comercios oscila entre 3,5 y 6,5 años, acelerado por la exención impositiva de Ingresos Brutos (IIBB) y sellos provinciales.',
-    regulatoryOrStandard: 'Ley Nacional 27.424 y Leyes Provinciales de Adhesión (ej. Ley Santa Fe 14.259).',
+      'En Argentina el payback típico para industrias y comercios oscila entre 3,5 y 6,5 años, impulsado por la facturación neta sin cargos extra (Res. SE 287/2025), la exención provincial de IIBB/Sellos y la estabilidad fiscal de la Ley 27.191 (prorrogada por Ley 28.282 hasta 2045).',
+    regulatoryOrStandard: 'Ley 27.424 (Res. SE 287/2025) • Ley 27.191 / 28.282 • Leyes Provinciales de Adhesión.',
   },
   capex: {
     id: 'capex',
@@ -81,22 +81,22 @@ export const METRIC_EXPLANATIONS: Record<string, MetricDetail> = {
     shortDesc: 'Costo total llave en mano de la instalación solar fotovoltaica.',
     formula: 'CAPEX = Potencia Recomendada (kWp) × Costo Unitario de EPC (USD/kWp)',
     interpretation:
-      'Incluye módulos fotovoltaicos Tier-1 bifaciales, inversores on-grid certificados, estructura de montaje en techo o suelo, protecciones eléctricas, ingeniería y trámite de prosumidor.',
+      'Incluye módulos fotovoltaicos Tier-1 bifaciales, inversores on-grid certificados IRAM/IEC anti-isla, estructura de montaje, protecciones eléctricas bajo AEA 90364-7-712, telemetría (>10 kW), medidor bidireccional e ingeniería de Usuario-Generador.',
     argentinaBenchmark:
       'Para proyectos industriales medianos y grandes (30 a 500 kWp), el costo de mercado en Argentina se sitúa entre USD 650 y USD 950 por kWp instalado. La incorporación de baterías (BESS) incrementa este valor entre un 60% y 100%.',
-    regulatoryOrStandard: 'Mercado de proveedores EPC y distribuidores Tier-1 en Argentina.',
+    regulatoryOrStandard: 'Reglamento AEA 90364-7-712 / 8-2 • Certificación IRAM / IEC anti-isla.',
   },
   annual_savings: {
     id: 'annual_savings',
     title: 'Ahorro Anual en Factura',
     unit: 'USD/año',
-    shortDesc: 'Monto económico anual no abonado a la distribuidora eléctrica.',
-    formula: 'Ahorro = Generación Anual Autoconsumida (kWh) × Tarifa Eléctrica Evitada (USD/kWh) + Excedentes Inyectados',
+    shortDesc: 'Monto económico anual no abonado a la distribuidora eléctrica bajo esquema Net Billing.',
+    formula: 'Ahorro = Autoconsumo Directo (kWh) × Tarifa Evitada + Excedentes Inyectados (kWh) × Tarifa de Inyección',
     interpretation:
-      'Representa el flujo de caja positivo anual que retiene la empresa en lugar de pagar cargos variables y cargos por potencia a la distribuidora.',
+      'Representa el flujo de caja positivo anual por energía autogenerada (autoconsumo a tarifa plena evitada) más los créditos por inyección neta a red sin cargos de respaldo ni peajes (Res. SE 287/2025).',
     argentinaBenchmark:
-      'Una PyME que instala 50 a 100 kWp ahorra típicamente entre USD 7.000 y USD 18.000 anuales según el cuadro tarifario de su provincia (EPE, EPEC, Edenor, EDEMSA).',
-    regulatoryOrStandard: 'Cuadros tarifarios aprobados por ENRE y entes reguladores provinciales.',
+      'Una PyME que instala 50 a 100 kWp ahorra típicamente entre USD 7.000 y USD 18.000 anuales según el cuadro tarifario de su provincia (EPE, EPEC, Edenor, EDEMSA) y la sincronización hacia costos marginales reales (Res. SE 400/2025).',
+    regulatoryOrStandard: 'Res. SE 287/2025 (Facturación Neta) • Res. SE 400/2025 • Cuadros tarifarios ENRE y Entes Provinciales.',
   },
   ghi: {
     id: 'ghi',
@@ -114,13 +114,13 @@ export const METRIC_EXPLANATIONS: Record<string, MetricDetail> = {
     id: 'dc_ac_ratio',
     title: 'Relación DC/AC (Inverter Loading Ratio - ILR)',
     unit: 'Ratio',
-    shortDesc: 'Sobredimensionamiento de paneles fotovoltaicos respecto a la potencia nominal de los inversores.',
-    formula: 'DC/AC Ratio = Potencia Pico de Paneles (kWp DC) / Potencia Nominal del Inversor (kW CA)',
+    shortDesc: 'Sobredimensionamiento de paneles fotovoltaicos respecto a la potencia nominal de los inversores (Potencia de Acople AC).',
+    formula: 'DC/AC Ratio = Potencia Pico de Paneles (kWp DC) / Potencia de Acople Nominal del Inversor (kW CA)',
     interpretation:
-      'Permite aprovechar mejor el inversor durante las primeras horas de la mañana, la tarde y días nublados, maximizando el factor de utilización con un recorte mínimo (clipping) en el mediodía de verano.',
+      'Bajo la Res. SE 287/2025, la categoría de Usuario-Generador (UGpe ≤ 3 kW, UGme 3–300 kW, UGma 300 kW–12 MW) y el tope frente a la potencia contratada se computan según la suma de potencias de acople AC de los inversores.',
     argentinaBenchmark:
       'El ratio óptimo de ingeniería en Argentina se sitúa entre 1.20 y 1.35.',
-    regulatoryOrStandard: 'Recomendaciones de diseño de SMA, Huawei, Fronius y Solis.',
+    regulatoryOrStandard: 'Res. SE 287/2025 (Cómputo de Potencia de Acople AC) • Estándar AEA 90364-7-712.',
   },
   irr: {
     id: 'irr',
@@ -131,8 +131,8 @@ export const METRIC_EXPLANATIONS: Record<string, MetricDetail> = {
     interpretation:
       'Indica el rendimiento financiero intrínseco del proyecto. Si la TIR supera el costo de oportunidad o tasa de descuento WACC (7.5%), el proyecto crea valor económico neto sustancial.',
     argentinaBenchmark:
-      'En proyectos solares comerciales e industriales en Argentina la TIR se sitúa entre el 16% y 24% en dólares, convirtiéndose en una excelente cobertura contra incrementos tarifarios.',
-    regulatoryOrStandard: 'Modelado financiero estándar según directrices NREL SAM e IEA PVPS.',
+      'En proyectos solares comerciales e industriales en Argentina la TIR se sitúa entre el 16% y 24% en dólares, reforzada por la estabilidad fiscal prorrogada hasta 2045 (Ley 28.282 / Ley 27.191) y la normalización tarifaria del MEM (Res. SE 400/2025).',
+    regulatoryOrStandard: 'Modelado financiero NREL SAM • Ley 27.191 / 28.282 • Res. SE 400/2025.',
   },
 };
 
@@ -155,8 +155,8 @@ export const MetricExplanationModal: React.FC<MetricExplanationModalProps> = ({
     shortDesc: 'Parámetro de dimensionamiento y rendimiento técnico-económico.',
     formula: 'Cálculo algorítmico basado en irradiación solar y potencia instalada.',
     interpretation: 'Métrica utilizada para evaluar la viabilidad de la inversión fotovoltaica.',
-    argentinaBenchmark: 'Conforme a los estándares de la Ley 27.424 en la República Argentina.',
-    regulatoryOrStandard: 'Estándar Solar Internacional IEC / NREL.',
+    argentinaBenchmark: 'Conforme a la Ley 27.424 (Res. SE 287/2025) y Ley 27.191 (Res. SE 400/2025) en Argentina.',
+    regulatoryOrStandard: 'Estándar Solar Internacional IEC 61724 / AEA 90364-7-712 / IRAM.',
   };
 
   return (
